@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=65.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scopelock"
+version = "1.0.0"
+description = "Zero-Trust Security & Capability-Divergence Gate for AI-Generated Software"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Ashutosh Shukla", email = "ashutosh@scopelock.dev" },
+    { name = "Ayush Narayan Gupta" },
+    { name = "Ayush Kumar" },
+    { name = "Ankit Mishra" }
+]
+keywords = [
+    "security",
+    "ai-generated-code",
+    "ast",
+    "tree-sitter",
+    "least-privilege",
+    "devsecops",
+    "codeql",
+    "static-analysis"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "tree-sitter>=0.22.0",
+    "tree-sitter-javascript>=0.23.0",
+    "tree-sitter-python>=0.23.0",
+    "pydantic>=2.5.0",
+    "click>=8.0.0",
+    "colorama>=0.4.6",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "pypdf>=4.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.0",
+    "mypy>=1.6.0"
+]
+
+[project.scripts]
+scopelock = "scopelock.cli.main:cli"
+
+[tool.setuptools]
+packages = [
+    "scopelock",
+    "scopelock.core",
+    "scopelock.scanner",
+    "scopelock.cli",
+    "scopelock.ui",
+    "scopelock.benchmarks"
+]
+
+[tool.setuptools.package-dir]
+scopelock = "."
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
