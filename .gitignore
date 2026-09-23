@@ -30,3 +30,5 @@ desktop.ini
 # Logs & Temporary
 *.log
 *.tmp
+*.docx
+generate_dossier_docx.py
