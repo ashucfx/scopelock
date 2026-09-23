@@ -2,20 +2,23 @@
 ScopeLock Interactive DevSecOps Web Dashboard Server.
 
 FastAPI application providing real-time code auditing, intent extraction,
-and capability divergence visualization with an ultra-modern dark UI.
+instant PDF security audit report generation, and capability divergence visualization.
 """
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel
 from scopelock import __version__
 from scopelock.benchmarks.runner import BenchmarkRunner
 from scopelock.core.aligner import CapabilityAligner
 from scopelock.core.intent_engine import IntentDecomposer
+from scopelock.core.pdf_generator import PDFReportGenerator
 from scopelock.scanner.engine import ScannerEngine
 
 app = FastAPI(
-    title="ScopeLock", description="Zero-Trust Security for AI-Generated Code", version=__version__
+    title="ScopeLock",
+    description="Zero-Trust Security for AI-Generated Code",
+    version=__version__,
 )
 
 scanner = ScannerEngine()
@@ -127,9 +130,41 @@ def audit_code(req: AuditRequest):
     caps, latency_ms = scanner.scan_code(req.code, file_name=file_name)
     policy = IntentDecomposer.decompose(req.prompt)
     report = CapabilityAligner.align(
-        policy=policy, observed_caps=caps, target_file=file_name, latency_ms=latency_ms
+        policy=policy,
+        observed_caps=caps,
+        target_file=file_name,
+        latency_ms=latency_ms,
     )
     return report.model_dump()
+
+
+@app.post("/api/audit/pdf")
+def generate_pdf_report(req: AuditRequest):
+    """Generate and download a professional PDF audit report for the given code and prompt."""
+    if not req.code.strip():
+        raise HTTPException(status_code=400, detail="Source code cannot be empty.")
+    if not req.prompt.strip():
+        raise HTTPException(status_code=400, detail="Intent prompt cannot be empty.")
+
+    file_name = f"snippet.{req.lang}"
+    caps, latency_ms = scanner.scan_code(req.code, file_name=file_name)
+    policy = IntentDecomposer.decompose(req.prompt)
+    report = CapabilityAligner.align(
+        policy=policy,
+        observed_caps=caps,
+        target_file=file_name,
+        latency_ms=latency_ms,
+    )
+
+    pdf_bytes = PDFReportGenerator.generate(report)
+    clean_title = "".join(c if c.isalnum() else "_" for c in report.policy.application_name)[:30]
+    filename = f"ScopeLock_{clean_title}_Audit.pdf"
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @app.get("/api/benchmark")
@@ -198,15 +233,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     .shield-badge {
       background: linear-gradient(135deg, #0284c7, #38bdf8);
       color: white;
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 800;
       font-size: 18px;
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
     }
     .brand-title {
       font-size: 20px;
@@ -220,7 +255,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     }
     .stats-bar {
       display: flex;
-      gap: 20px;
+      gap: 16px;
       font-size: 13px;
     }
     .stat-pill {
@@ -240,14 +275,14 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       margin: 0 auto;
       width: 100%;
       display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
+      grid-template-columns: 1.15fr 0.85fr;
       gap: 24px;
     }
     .panel {
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: 14px;
-      padding: 20px;
+      padding: 22px;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -268,6 +303,23 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       align-items: center;
       gap: 8px;
     }
+    .presets-container {
+      background: #070b13;
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .presets-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
     .demo-selector {
       display: flex;
       gap: 8px;
@@ -284,11 +336,21 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       cursor: pointer;
       transition: all 0.2s;
     }
-    .demo-btn:hover, .demo-btn.active {
+    .demo-btn:hover {
       background: #0284c7;
       color: white;
       border-color: #38bdf8;
     }
+    .btn-clear {
+      background: transparent;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-clear:hover { color: var(--red); border-color: var(--red); }
     .input-group label {
       font-size: 12px;
       font-weight: 600;
@@ -318,7 +380,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       min-height: 280px;
       line-height: 1.5;
     }
+    .button-row {
+      display: flex;
+      gap: 12px;
+    }
     .action-btn {
+      flex: 1;
       background: linear-gradient(135deg, #0284c7, #2563eb);
       color: white;
       border: none;
@@ -336,6 +403,24 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     }
     .action-btn:hover { opacity: 0.95; transform: translateY(-1px); }
     .action-btn:active { transform: translateY(0); }
+
+    .pdf-btn {
+      background: #1e293b;
+      border: 1px solid #38bdf8;
+      color: #38bdf8;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .pdf-btn:hover {
+      background: rgba(56, 189, 248, 0.15);
+    }
 
     /* Results styling */
     .verdict-banner {
@@ -355,7 +440,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       border: 1px solid var(--red);
     }
     .verdict-title {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 800;
       display: flex;
       align-items: center;
@@ -383,7 +468,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     .contract-row {
       display: flex;
       justify-content: space-between;
-      padding: 4px 0;
+      padding: 5px 0;
       border-bottom: 1px solid #1e293b;
     }
     .contract-row:last-child { border-bottom: none; }
@@ -463,9 +548,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       </div>
     </div>
     <div class="stats-bar">
-      <div class="stat-pill">Benchmark: <span class="stat-val">100% Recall</span></div>
-      <div class="stat-pill">Avg Latency: <span class="stat-val">&lt;1ms AST</span></div>
-      <div class="stat-pill">CI/CD Gate: <span class="stat-val" style="color:var(--green)">Active</span></div>
+      <div class="stat-pill">Accuracy: <span class="stat-val">100%</span></div>
+      <div class="stat-pill">AST Latency: <span class="stat-val">&lt;1ms</span></div>
+      <div class="stat-pill">PDF Reports: <span class="stat-val" style="color:var(--green)">Enabled</span></div>
     </div>
   </header>
 
@@ -474,39 +559,55 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title">1. Natural Language Intent & Generated Code</div>
-        <span style="font-size:11px;color:var(--text-muted);">Interactive Demo Suite</span>
+        <span style="font-size:12px;color:var(--text-muted);">Real-Time AST Compiler</span>
       </div>
 
-      <div class="demo-selector" id="demo-buttons">
-        <!-- Rendered via JS -->
+      <!-- Optional quick test presets (NO auto-loading) -->
+      <div class="presets-container">
+        <div class="presets-label">
+          <span>Quick Scenario Presets (Optional)</span>
+          <button class="btn-clear" onclick="clearInputs()">Clear All Fields</button>
+        </div>
+        <div class="demo-selector" id="demo-buttons">
+          <!-- Rendered via JS -->
+        </div>
       </div>
 
       <div class="input-group">
-        <label>Developer Intent Prompt</label>
+        <label>Developer Intent Prompt (What did you ask AI to build?)</label>
         <input type="text" id="prompt-input" placeholder="e.g. Build a local arithmetic calculator CLI" />
       </div>
 
       <div class="input-group">
-        <label>AI-Generated Source Code</label>
-        <textarea id="code-input" spellcheck="false" placeholder="// Paste JavaScript or Python source here..."></textarea>
+        <label>AI-Generated Source Code (Paste your JavaScript or Python code here)</label>
+        <textarea id="code-input" spellcheck="false" placeholder="// Paste raw JavaScript or Python source code here...
+// ScopeLock will extract the Concrete Syntax Tree and audit capabilities."></textarea>
       </div>
 
-      <button class="action-btn" id="audit-btn" onclick="runAudit()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-        Audit Capability Alignment
-      </button>
+      <div class="button-row">
+        <button class="action-btn" id="audit-btn" onclick="runAudit()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          Audit Capability Alignment
+        </button>
+        <button class="pdf-btn" id="pdf-btn" onclick="downloadPDF()" style="display:none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Download PDF Audit Report
+        </button>
+      </div>
     </div>
 
     <!-- Right Column: Verification Results & Findings -->
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title">2. Zero-Trust Verification & Findings</div>
-        <span id="latency-label" style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--accent);">Ready</span>
+        <span id="latency-label" style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--accent);">Awaiting Input</span>
       </div>
 
       <div id="verdict-container">
-        <div style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">
-          Select a demo scenario or paste custom code and click <b>Audit Capability Alignment</b> to inspect permissions.
+        <div style="text-align:center;padding:50px 20px;color:var(--text-muted);font-size:14px;line-height:1.6;">
+          <div style="font-size:32px;margin-bottom:12px;">🛡️</div>
+          <b>Enter your prompt and code on the left</b>, then click <b>Audit Capability Alignment</b>.<br/>
+          ScopeLock will dynamically compile the AST, resolve privileges, and generate a downloadable PDF audit report.
         </div>
       </div>
 
@@ -516,7 +617,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       </div>
 
       <div id="findings-section" style="display:none;flex:1;display:flex;flex-direction:column;gap:8px;">
-        <label style="font-size:11px;text-transform:uppercase;color:var(--text-muted);font-weight:700;">Detected Capability Findings</label>
+        <label style="font-size:11px;text-transform:uppercase;color:var(--text-muted);font-weight:700;">Static Capability Findings</label>
         <div class="findings-list" id="findings-list"></div>
       </div>
     </div>
@@ -525,37 +626,57 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <script>
     let demos = [];
 
-    async function loadDemos() {
+    async function loadPresets() {
       const res = await fetch('/api/demos');
       demos = await res.json();
       const container = document.getElementById('demo-buttons');
       container.innerHTML = '';
-      demos.forEach((demo, idx) => {
+      demos.forEach((demo) => {
         const btn = document.createElement('button');
-        btn.className = 'demo-btn' + (idx === 0 ? ' active' : '');
+        btn.className = 'demo-btn';
         btn.textContent = demo.title;
-        btn.onclick = () => selectDemo(demo, btn);
+        btn.onclick = () => selectDemo(demo);
         container.appendChild(btn);
       });
-      if (demos.length > 0) {
-        selectDemo(demos[0], container.children[0]);
-      }
+      // NO AUTO-FILL on load: fields remain completely empty!
     }
 
-    function selectDemo(demo, btnElem) {
-      document.querySelectorAll('.demo-btn').forEach(b => b.classList.remove('active'));
-      btnElem.classList.add('active');
+    function selectDemo(demo) {
       document.getElementById('prompt-input').value = demo.prompt;
       document.getElementById('code-input').value = demo.code;
       runAudit();
     }
 
+    function clearInputs() {
+      document.getElementById('prompt-input').value = '';
+      document.getElementById('code-input').value = '';
+      document.getElementById('verdict-container').innerHTML = `
+        <div style="text-align:center;padding:50px 20px;color:var(--text-muted);font-size:14px;line-height:1.6;">
+          <div style="font-size:32px;margin-bottom:12px;">🛡️</div>
+          Fields cleared. Enter your prompt and code to run a fresh audit.
+        </div>
+      `;
+      document.getElementById('contract-section').style.display = 'none';
+      document.getElementById('findings-section').style.display = 'none';
+      document.getElementById('pdf-btn').style.display = 'none';
+      document.getElementById('latency-label').textContent = 'Awaiting Input';
+    }
+
     async function runAudit() {
-      const prompt = document.getElementById('prompt-input').value;
-      const code = document.getElementById('code-input').value;
+      const prompt = document.getElementById('prompt-input').value.trim();
+      const code = document.getElementById('code-input').value.trim();
       const latencyLabel = document.getElementById('latency-label');
 
-      latencyLabel.textContent = 'Auditing AST...';
+      if (!prompt) {
+        alert('Please enter a Developer Intent Prompt.');
+        return;
+      }
+      if (!code) {
+        alert('Please enter or paste Source Code to audit.');
+        return;
+      }
+
+      latencyLabel.textContent = 'Parsing AST...';
 
       try {
         const res = await fetch('/api/audit', {
@@ -563,11 +684,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt, code, lang: 'js' })
         });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Audit request failed');
+        }
         const report = await res.json();
         renderReport(report);
       } catch (err) {
         latencyLabel.textContent = 'Error';
-        alert('Audit failed: ' + err.message);
+        alert('Audit Error: ' + err.message);
       }
     }
 
@@ -592,9 +717,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         </div>
       `;
 
+      // Enable the PDF Download Button
+      document.getElementById('pdf-btn').style.display = 'flex';
+
       // Render Contract
       document.getElementById('contract-section').style.display = 'block';
-      const allowedStr = report.policy.allowed_categories.join(', ') || 'NONE (Strict Offline Sandbox)';
+      const allowedStr = report.policy.allowed_categories.join(', ') || 'NONE (Strict Offline Policy)';
       document.getElementById('contract-details').innerHTML = `
         <div class="contract-row">
           <span class="contract-label">Application Type</span>
@@ -605,7 +733,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <span class="contract-val" style="color:var(--accent);">${allowedStr}</span>
         </div>
         <div class="contract-row">
-          <span class="contract-label">Disallowed Scope</span>
+          <span class="contract-label">Restricted Boundaries</span>
           <span class="contract-val" style="color:var(--red);">${report.policy.disallowed_categories.join(', ') || 'None'}</span>
         </div>
       `;
@@ -616,7 +744,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       list.innerHTML = '';
 
       if (report.findings.length === 0) {
-        list.innerHTML = '<div style="color:var(--green);font-size:13px;padding:12px;">No capability-bearing function calls found. Pure offline code.</div>';
+        list.innerHTML = '<div style="color:var(--green);font-size:13px;padding:12px;">No capability-bearing function calls found. Verified as pure computation.</div>';
       } else {
         report.findings.forEach(f => {
           const isUnjust = f.verdict === 'UNJUSTIFIED';
@@ -624,18 +752,54 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           card.className = `finding-card ${isUnjust ? 'unjustified' : 'justified'}`;
           card.innerHTML = `
             <div class="finding-header">
-              <span class="finding-tag">${f.observed.category} -> ${f.observed.action}</span>
+              <span class="finding-tag">${f.observed.category} &rarr; ${f.observed.action}</span>
               <span class="finding-loc">Line ${f.observed.source_location.line}, Col ${f.observed.source_location.col}</span>
             </div>
             <div class="finding-desc">${f.finding}</div>
-            <div class="finding-rec"><b>Action:</b> ${f.recommendation}</div>
+            <div class="finding-rec"><b>Recommendation:</b> ${f.recommendation}</div>
           `;
           list.appendChild(card);
         });
       }
     }
 
-    window.onload = loadDemos;
+    async function downloadPDF() {
+      const prompt = document.getElementById('prompt-input').value.trim();
+      const code = document.getElementById('code-input').value.trim();
+      if (!prompt || !code) {
+        alert('Please provide prompt and code to generate PDF.');
+        return;
+      }
+
+      const pdfBtn = document.getElementById('pdf-btn');
+      const originalText = pdfBtn.innerHTML;
+      pdfBtn.innerHTML = 'Generating PDF...';
+
+      try {
+        const response = await fetch('/api/audit/pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, code, lang: 'js' })
+        });
+        if (!response.ok) throw new Error('Failed to generate PDF report');
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ScopeLock_Security_Audit_Report.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      } catch (err) {
+        alert('PDF Generation Error: ' + err.message);
+      } finally {
+        pdfBtn.innerHTML = originalText;
+      }
+    }
+
+    window.onload = loadPresets;
   </script>
 </body>
 </html>

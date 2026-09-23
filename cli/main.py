@@ -2,10 +2,12 @@
 ScopeLock Developer CLI.
 
 Enterprise CLI for scanning AI-synthesized code against developer intent,
+auditing entire repositories recursively, managing Git pre-commit hooks,
 running empirical benchmarks, and serving the interactive security dashboard.
 """
 
 import sys
+from pathlib import Path
 
 import click
 from colorama import Fore, Style, init
@@ -13,6 +15,8 @@ from colorama import Fore, Style, init
 from scopelock import __version__
 from scopelock.core.aligner import CapabilityAligner
 from scopelock.core.intent_engine import IntentDecomposer
+from scopelock.core.pdf_generator import PDFReportGenerator
+from scopelock.core.project_scanner import ProjectScanner
 from scopelock.core.reporter import ReportFormatter
 from scopelock.core.schema import AuditVerdict
 from scopelock.scanner.engine import ScannerEngine
@@ -52,10 +56,86 @@ def scan(file_path: str, prompt: str, as_json: bool, as_sarif: bool):
     else:
         click.echo(ReportFormatter.to_terminal(report))
 
-    # Exit code 1 if audit failed (blocks CI/CD pull request)
     if report.final_verdict == AuditVerdict.FAILED:
         sys.exit(1)
     sys.exit(0)
+
+
+@cli.command(name="scan-project")
+@click.argument("directory", default=".", type=click.Path(exists=True, file_okay=False))
+@click.option("--policy", "policy_file", help="Path to scopelock.json configuration policy.")
+@click.option("--pdf", "pdf_output", help="Optional output path to save a PDF summary report.")
+def scan_project(directory: str, policy_file: str | None, pdf_output: str | None):
+    """
+    Recursively audit an entire codebase directory.
+    Automatically extracts in-code '// @intent: ...' comment headers.
+    """
+    click.echo(Fore.CYAN + Style.BRIGHT + f"\n[SCAN] ScopeLock scanning project directory: {directory} ...")
+    scanner = ProjectScanner(policy_file=policy_file)
+    summary = scanner.scan_directory(directory)
+
+    click.echo("\n" + "=" * 70)
+    click.echo(Fore.CYAN + Style.BRIGHT + " SCOPELOCK: PROJECT REPOSITORY AUDIT SUMMARY ".center(70))
+    click.echo("=" * 70)
+    click.echo(f"Total Files Scanned : {summary.scanned_files}")
+    click.echo(f"Compliant Files     : {Fore.GREEN}{summary.clean_files}{Style.RESET_ALL}")
+    click.echo(f"Over-privileged     : {Fore.RED if summary.violated_files > 0 else Fore.GREEN}{summary.violated_files}{Style.RESET_ALL}")
+    click.echo(f"Total Violations    : {summary.total_violations}")
+    click.echo(f"Total AST Latency   : {summary.total_latency_ms:.2f} ms")
+    click.echo("-" * 70)
+
+    for report in summary.file_reports:
+        status_tag = Fore.GREEN + "[PASS]" if report.final_verdict == AuditVerdict.PASSED else Fore.RED + "[FAIL]"
+        click.echo(f"{status_tag}{Style.RESET_ALL} {report.target_file:<40} ({report.policy.stated_intent[:25]}..)")
+
+        for f in report.findings:
+            if f.verdict != AuditVerdict.PASSED:
+                loc = f.observed.source_location
+                click.echo(f"    {Fore.RED}* L{loc.line}: {f.observed.category.value} -> {f.observed.raw_call} ({f.finding}){Style.RESET_ALL}")
+
+    click.echo("=" * 70)
+
+    # Export PDF if requested
+    if pdf_output and summary.file_reports:
+        pdf_bytes = PDFReportGenerator.generate(summary.file_reports[0])
+        with open(pdf_output, "wb") as f:
+            f.write(pdf_bytes)
+        click.echo(Fore.GREEN + f"[PDF] Audit Report successfully saved to: {pdf_output}")
+
+    if summary.verdict == AuditVerdict.FAILED:
+        click.echo(Fore.RED + Style.BRIGHT + "\n[AUDIT FAILED] Capability over-reach detected. Deployment blocked.\n")
+        sys.exit(1)
+
+    click.echo(Fore.GREEN + Style.BRIGHT + "\n[AUDIT PASSED] All repository modules comply with least-privilege intent.\n")
+    sys.exit(0)
+
+
+@cli.command(name="init-hooks")
+def init_hooks():
+    """Install automated Git pre-commit hook in the current repository."""
+    git_dir = Path(".git")
+    if not git_dir.exists() or not git_dir.is_dir():
+        click.echo(Fore.RED + "Error: Current directory is not a Git repository root.")
+        sys.exit(1)
+
+    hooks_dir = git_dir / "hooks"
+    hooks_dir.mkdir(exist_ok=True)
+    pre_commit_script = hooks_dir / "pre-commit"
+
+    hook_content = """#!/bin/sh
+# ScopeLock automated pre-commit security check
+echo "[ScopeLock] Running Zero-Trust Capability Audit..."
+scopelock scan-project .
+if [ $? -ne 0 ]; then
+    echo "[ScopeLock] Commit rejected: Unjustified capabilities detected in staged files."
+    exit 1
+fi
+"""
+    with open(pre_commit_script, "w", encoding="utf-8") as f:
+        f.write(hook_content)
+
+    click.echo(Fore.GREEN + Style.BRIGHT + "[OK] ScopeLock Git pre-commit hook installed successfully in .git/hooks/pre-commit!")
+    click.echo("Every 'git commit' will now automatically verify code against least privilege before committing.")
 
 
 @cli.command(name="audit-code")
