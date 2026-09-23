@@ -32,3 +32,7 @@ desktop.ini
 *.tmp
 *.docx
 generate_dossier_docx.py
+build_beautiful_docs_pdf.py
+
+# Entire docs directory ignored
+docs/
