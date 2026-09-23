@@ -124,25 +124,32 @@ Evaluated across **25 representative programs** (11 clean baselines, 14 capabili
 
 ---
 
-## 5. Viva Voce & Academic Defense Guide
+## 5. Enterprise Usage & Workflows
 
-### Q1: Why not just use ESLint or SonarQube?
-> **Answer:** Linters detect syntactic syntax errors and known CVE anti-patterns. They have no concept of what the software was intended to do. If a calculator connects to an external IP, ESLint reports zero errors because `fetch()` is valid syntax. ScopeLock evaluates whether an API invocation is *authorized* by the natural-language prompt.
+### Recursive Repository Audit
+Audit an entire codebase in seconds:
+```bash
+scopelock scan-project ./src
+```
 
-### Q2: Why use an Abstract Syntax Tree (AST) instead of Regular Expressions?
-> **Answer:** Regular expressions treat code as unstructured text and suffer from massive false positives (triggering on comments like `// TODO: fetch data` or variables like `let fetch = 5;`). Tree-sitter understands the formal language grammar and only inspects executable `call_expression` nodes.
+### In-Code Intent Annotations
+Declare intent directly inside source code comments without passing CLI flags:
+```javascript
+// @intent: Local mathematical calculator for pricing calculations
+function calculateSubtotal(price, taxRate) {
+    return price * (1 + taxRate);
+}
+```
 
-### Q3: Is untrusted code executed on the host machine?
-> **Answer:** No. ScopeLock operates primarily via deterministic static AST traversal. Source code is parsed without execution, ensuring host security is never compromised.
+### Automated Git Pre-Commit Hook
+Prevent unrequested permissions from ever being committed:
+```bash
+scopelock init-hooks
+```
 
 ---
 
-## Authors & Academic Citation
-* **Ashutosh Shukla** (Roll No: 2300970100069)
-* **Ayush Narayan Gupta** (Roll No: 2300970100074)
-* **Ayush Kumar** (Roll No: 2300970100073)
-* **Ankit Mishra** (Roll No: 2300970100047)
+## 6. License & Community
 
-*Department of Computer Science and Engineering*  
-*Galgotias College of Engineering & Technology, Greater Noida, UP, India*  
-*Affiliated to Dr. A.P.J. Abdul Kalam Technical University (AKTU), Lucknow*
+ScopeLock is open-source software licensed under the [Apache 2.0 License](LICENSE).
+Built for software engineering teams and AI developers requiring zero-trust execution assurance.
