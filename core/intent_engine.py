@@ -8,9 +8,9 @@ with seamless fallback from LLM inference.
 
 import os
 import re
-from typing import Optional, Set
-from scopelock.core.taxonomy import CapabilityCategory, CapabilityAction
-from scopelock.core.schema import ScopePolicy, ExpectedCapability
+
+from scopelock.core.schema import ExpectedCapability, ScopePolicy
+from scopelock.core.taxonomy import CapabilityCategory
 
 
 class HeuristicIntentEngine:
@@ -20,39 +20,83 @@ class HeuristicIntentEngine:
     """
 
     # Ambiguity patterns
-    AMBIGUOUS_PATTERNS = [
+    AMBIGUOUS_PATTERNS = (
         r"\bmanage my stuff\b",
         r"\bdo whatever\b",
         r"\bgeneral utility\b",
         r"\bsystem tool\b$",
-    ]
+    )
 
     # Keyword patterns for capabilities
-    NETWORK_KEYWORDS = [
-        "fetch", "http", "api", "weather", "download", "request",
-        "url", "rest", "endpoint", "scrape", "server", "webhook"
-    ]
+    NETWORK_KEYWORDS = (
+        "fetch",
+        "http",
+        "api",
+        "weather",
+        "download",
+        "request",
+        "url",
+        "rest",
+        "endpoint",
+        "scrape",
+        "server",
+        "webhook",
+    )
 
-    FILESYSTEM_KEYWORDS = [
-        "file", "csv", "json", "read", "write", "save", "log",
-        "directory", "folder", "disk", "backup", "txt", "export"
-    ]
+    FILESYSTEM_KEYWORDS = (
+        "file",
+        "csv",
+        "json",
+        "read",
+        "write",
+        "save",
+        "log",
+        "directory",
+        "folder",
+        "disk",
+        "backup",
+        "txt",
+        "export",
+    )
 
-    PROCESS_KEYWORDS = [
-        "shell", "command", "bash", "execute", "run process", "terminal",
-        "spawn", "exec", "cli command"
-    ]
+    PROCESS_KEYWORDS = (
+        "shell",
+        "command",
+        "bash",
+        "execute",
+        "run process",
+        "terminal",
+        "spawn",
+        "exec",
+        "cli command",
+    )
 
-    DATABASE_KEYWORDS = [
-        "database", "db", "sql", "postgres", "mysql", "mongodb",
-        "sqlite", "query", "record", "table"
-    ]
+    DATABASE_KEYWORDS = (
+        "database",
+        "db",
+        "sql",
+        "postgres",
+        "mysql",
+        "mongodb",
+        "sqlite",
+        "query",
+        "record",
+        "table",
+    )
 
-    OFFLINE_STRICT_KEYWORDS = [
-        "calculator", "math", "arithmetic", "matrix", "sort",
-        "unit converter", "fibonacci", "factorial", "string format",
-        "offline", "pure function"
-    ]
+    OFFLINE_STRICT_KEYWORDS = (
+        "calculator",
+        "math",
+        "arithmetic",
+        "matrix",
+        "sort",
+        "unit converter",
+        "fibonacci",
+        "factorial",
+        "string format",
+        "offline",
+        "pure function",
+    )
 
     @classmethod
     def decompose(cls, prompt: str) -> ScopePolicy:
@@ -69,18 +113,18 @@ class HeuristicIntentEngine:
                     disallowed_categories={
                         CapabilityCategory.NETWORK,
                         CapabilityCategory.PROCESS,
-                        CapabilityCategory.SECRET
+                        CapabilityCategory.SECRET,
                     },
                     is_ambiguous=True,
                     clarification_prompt=(
                         "Your requirement is ambiguous. Please clarify if network egress "
                         "or filesystem access is required for this utility."
-                    )
+                    ),
                 )
 
-        allowed_categories: Set[CapabilityCategory] = set()
+        allowed_categories: set[CapabilityCategory] = set()
         expected_caps = []
-        disallowed_categories: Set[CapabilityCategory] = set()
+        disallowed_categories: set[CapabilityCategory] = set()
 
         # Check if strictly offline / pure computation
         is_strictly_offline = any(k in prompt_lower for k in cls.OFFLINE_STRICT_KEYWORDS)
@@ -94,7 +138,7 @@ class HeuristicIntentEngine:
                     category=CapabilityCategory.NETWORK,
                     action="*",
                     target_scope="*",
-                    justification=f"Prompt explicitly mentions network-related requirements: '{prompt}'"
+                    justification=f"Prompt explicitly mentions network-related requirements: '{prompt}'",
                 )
             )
         else:
@@ -109,7 +153,7 @@ class HeuristicIntentEngine:
                     category=CapabilityCategory.FILESYSTEM,
                     action="*",
                     target_scope="*",
-                    justification=f"Prompt mentions filesystem operations: '{prompt}'"
+                    justification=f"Prompt mentions filesystem operations: '{prompt}'",
                 )
             )
         elif not has_fs:
@@ -124,7 +168,7 @@ class HeuristicIntentEngine:
                     category=CapabilityCategory.PROCESS,
                     action="*",
                     target_scope="*",
-                    justification="Process execution explicitly requested by prompt."
+                    justification="Process execution explicitly requested by prompt.",
                 )
             )
         else:
@@ -149,7 +193,7 @@ class HeuristicIntentEngine:
             allowed_categories=allowed_categories,
             expected_capabilities=expected_caps,
             disallowed_categories=disallowed_categories,
-            is_ambiguous=False
+            is_ambiguous=False,
         )
 
 
@@ -167,6 +211,7 @@ class IntentDecomposer:
             try:
                 # LLM decomposition (if openai installed and key provided)
                 import openai
+
                 client = openai.OpenAI(api_key=api_key)
                 system_prompt = (
                     "You are a formal security analyst. Convert the natural language requirement "
@@ -177,12 +222,12 @@ class IntentDecomposer:
                     model="gpt-4o-mini",
                     messages=[
                         {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": f"Requirement: {prompt}"}
+                        {"role": "user", "content": f"Requirement: {prompt}"},
                     ],
-                    response_format=ScopePolicy
+                    response_format=ScopePolicy,
                 )
                 return response.choices[0].message.parsed
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 # Graceful fallback to deterministic heuristic
                 pass
 

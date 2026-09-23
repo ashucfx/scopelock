@@ -5,14 +5,13 @@ Computes the set-theoretic difference between observed program authority
 and declared prompt requirements: Δ = C_obs \\ C_exp.
 """
 
-from typing import List
 from scopelock.core.schema import (
-    ScopePolicy,
-    ObservedCapability,
-    DivergenceFinding,
-    RiskTier,
-    AuditVerdict,
     AuditReport,
+    AuditVerdict,
+    DivergenceFinding,
+    ObservedCapability,
+    RiskTier,
+    ScopePolicy,
 )
 from scopelock.core.taxonomy import CapabilityCategory
 
@@ -24,14 +23,14 @@ class CapabilityAligner:
     def align(
         cls,
         policy: ScopePolicy,
-        observed_caps: List[ObservedCapability],
+        observed_caps: list[ObservedCapability],
         target_file: str = "snippet.js",
-        latency_ms: float = 0.0
+        latency_ms: float = 0.0,
     ) -> AuditReport:
         """
         Compare observed capabilities against the policy contract.
         """
-        findings: List[DivergenceFinding] = []
+        findings: list[DivergenceFinding] = []
 
         # If the intent itself is ambiguous, flag review required
         if policy.is_ambiguous:
@@ -41,7 +40,7 @@ class CapabilityAligner:
                     verdict=RiskTier.AMBIGUOUS,
                     risk_score=0.50,
                     finding=f"Capability {obs.category} cannot be verified because requirement intent is ambiguous.",
-                    recommendation="Clarify developer requirements before accepting code."
+                    recommendation="Clarify developer requirements before accepting code.",
                 )
                 findings.append(finding)
 
@@ -52,7 +51,7 @@ class CapabilityAligner:
                 findings=findings,
                 total_violations=len(findings),
                 final_verdict=AuditVerdict.NEEDS_REVIEW,
-                analysis_latency_ms=latency_ms
+                analysis_latency_ms=latency_ms,
             )
 
         # Standard alignment logic: Check each observed capability
@@ -61,11 +60,16 @@ class CapabilityAligner:
 
             if not is_allowed:
                 # UNJUSTIFIED VIOLATION
-                score = 0.95 if obs.category in (
-                    CapabilityCategory.PROCESS,
-                    CapabilityCategory.SECRET,
-                    CapabilityCategory.NETWORK
-                ) else 0.75
+                score = (
+                    0.95
+                    if obs.category
+                    in (
+                        CapabilityCategory.PROCESS,
+                        CapabilityCategory.SECRET,
+                        CapabilityCategory.NETWORK,
+                    )
+                    else 0.75
+                )
 
                 finding = DivergenceFinding(
                     observed=obs,
@@ -79,19 +83,20 @@ class CapabilityAligner:
                     recommendation=(
                         f"Remove or refactor '{obs.raw_call}' at Line {obs.source_location.line}, "
                         f"Column {obs.source_location.col} before deploying to production."
-                    )
+                    ),
                 )
                 findings.append(finding)
             else:
                 # Allowed by category, verify scope if specified
                 scope_match = True
-                expected_match = None
                 for exp in policy.expected_capabilities:
                     if exp.category == obs.category:
-                        expected_match = exp
-                        if exp.target_scope != "*" and obs.target_scope != "*":
-                            if exp.target_scope not in obs.target_scope:
-                                scope_match = False
+                        if (
+                            exp.target_scope != "*"
+                            and obs.target_scope != "*"
+                            and exp.target_scope not in obs.target_scope
+                        ):
+                            scope_match = False
                         break
 
                 if scope_match:
@@ -103,7 +108,7 @@ class CapabilityAligner:
                             f"Justified {obs.category.value} access: "
                             f"'{obs.raw_call}' aligns with stated requirements."
                         ),
-                        recommendation="Permission authorized by intent contract."
+                        recommendation="Permission authorized by intent contract.",
                     )
                 else:
                     finding = DivergenceFinding(
@@ -114,7 +119,7 @@ class CapabilityAligner:
                             f"Capability {obs.category.value} is permitted, but target scope "
                             f"'{obs.target_scope}' exceeds declared target scope."
                         ),
-                        recommendation="Audit destination endpoint or file path."
+                        recommendation="Audit destination endpoint or file path.",
                     )
                 findings.append(finding)
 
@@ -131,5 +136,5 @@ class CapabilityAligner:
             findings=findings,
             total_violations=len(violations),
             final_verdict=final_verdict,
-            analysis_latency_ms=latency_ms
+            analysis_latency_ms=latency_ms,
         )

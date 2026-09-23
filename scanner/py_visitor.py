@@ -5,16 +5,15 @@ Uses Tree-sitter Concrete Syntax Tree traversal to identify security-sensitive
 Python APIs (subprocess, os.system, requests, open, os.environ).
 """
 
-from typing import List, Optional
 import tree_sitter_python as tspy
-from tree_sitter import Language, Parser, Node
+from tree_sitter import Language, Node, Parser
 
-from scopelock.core.taxonomy import (
-    CapabilityCategory,
-    CapabilityAction,
-    PY_SENSITIVE_APIS,
-)
 from scopelock.core.schema import ObservedCapability, SourceLocation
+from scopelock.core.taxonomy import (
+    PY_SENSITIVE_APIS,
+    CapabilityAction,
+    CapabilityCategory,
+)
 
 
 class PythonASTVisitor:
@@ -24,21 +23,17 @@ class PythonASTVisitor:
         self.language = Language(tspy.language())
         self.parser = Parser(self.language)
 
-    def scan(self, code: str, file_name: str = "script.py") -> List[ObservedCapability]:
+    def scan(self, code: str, file_name: str = "script.py") -> list[ObservedCapability]:
         """Parse Python code string and return observed capabilities."""
         code_bytes = code.encode("utf-8")
         tree = self.parser.parse(code_bytes)
-        capabilities: List[ObservedCapability] = []
+        capabilities: list[ObservedCapability] = []
 
         self._traverse(tree.root_node, code_bytes, file_name, capabilities)
         return capabilities
 
     def _traverse(
-        self,
-        node: Node,
-        code_bytes: bytes,
-        file_name: str,
-        results: List[ObservedCapability]
+        self, node: Node, code_bytes: bytes, file_name: str, results: list[ObservedCapability]
     ) -> None:
         """Recursively traverse AST nodes."""
         if node.type == "call":
@@ -50,19 +45,21 @@ class PythonASTVisitor:
             self._traverse(child, code_bytes, file_name, results)
 
     def _handle_call(
-        self,
-        node: Node,
-        code_bytes: bytes,
-        file_name: str,
-        results: List[ObservedCapability]
+        self, node: Node, code_bytes: bytes, file_name: str, results: list[ObservedCapability]
     ) -> None:
         """Inspect Python function calls."""
         func_node = node.child_by_field_name("function")
         if not func_node:
             return
 
-        call_ident = code_bytes[func_node.start_byte:func_node.end_byte].decode("utf-8", errors="replace").strip()
-        raw_call = code_bytes[node.start_byte:node.end_byte].decode("utf-8", errors="replace").strip()
+        call_ident = (
+            code_bytes[func_node.start_byte : func_node.end_byte]
+            .decode("utf-8", errors="replace")
+            .strip()
+        )
+        raw_call = (
+            code_bytes[node.start_byte : node.end_byte].decode("utf-8", errors="replace").strip()
+        )
         target_scope = self._extract_first_arg(node, code_bytes)
 
         for pattern, (category, action, _) in PY_SENSITIVE_APIS.items():
@@ -81,7 +78,7 @@ class PythonASTVisitor:
                     col=node.start_point[1],
                     end_line=node.end_point[0] + 1,
                     end_col=node.end_point[1],
-                    snippet=raw_call[:120]
+                    snippet=raw_call[:120],
                 )
                 results.append(
                     ObservedCapability(
@@ -91,20 +88,18 @@ class PythonASTVisitor:
                         raw_call=call_ident,
                         target_scope=target_scope or "*",
                         confidence=0.98,
-                        origin="STATIC_AST"
+                        origin="STATIC_AST",
                     )
                 )
                 break
 
     def _handle_attribute(
-        self,
-        node: Node,
-        code_bytes: bytes,
-        file_name: str,
-        results: List[ObservedCapability]
+        self, node: Node, code_bytes: bytes, file_name: str, results: list[ObservedCapability]
     ) -> None:
         """Detect os.environ attribute accesses."""
-        expr_text = code_bytes[node.start_byte:node.end_byte].decode("utf-8", errors="replace").strip()
+        expr_text = (
+            code_bytes[node.start_byte : node.end_byte].decode("utf-8", errors="replace").strip()
+        )
         if expr_text.startswith("os.environ"):
             loc = SourceLocation(
                 file=file_name,
@@ -112,7 +107,7 @@ class PythonASTVisitor:
                 col=node.start_point[1],
                 end_line=node.end_point[0] + 1,
                 end_col=node.end_point[1],
-                snippet=expr_text
+                snippet=expr_text,
             )
             results.append(
                 ObservedCapability(
@@ -122,11 +117,11 @@ class PythonASTVisitor:
                     raw_call=expr_text,
                     target_scope=expr_text.split(".")[-1],
                     confidence=0.99,
-                    origin="STATIC_AST"
+                    origin="STATIC_AST",
                 )
             )
 
-    def _extract_first_arg(self, call_node: Node, code_bytes: bytes) -> Optional[str]:
+    def _extract_first_arg(self, call_node: Node, code_bytes: bytes) -> str | None:
         """Extract first string argument in Python call."""
         args_node = call_node.child_by_field_name("arguments")
         if not args_node or args_node.named_child_count == 0:
@@ -134,6 +129,8 @@ class PythonASTVisitor:
 
         first_arg = args_node.named_children[0]
         if first_arg.type == "string":
-            text = code_bytes[first_arg.start_byte:first_arg.end_byte].decode("utf-8", errors="replace")
+            text = code_bytes[first_arg.start_byte : first_arg.end_byte].decode(
+                "utf-8", errors="replace"
+            )
             return text.strip("\"'")
         return None

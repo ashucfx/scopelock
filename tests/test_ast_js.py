@@ -1,8 +1,8 @@
 """Test suite for JavaScript AST visitor."""
 
 import pytest
+from scopelock.core.taxonomy import CapabilityAction, CapabilityCategory
 from scopelock.scanner.js_visitor import JavaScriptASTVisitor
-from scopelock.core.taxonomy import CapabilityCategory, CapabilityAction
 
 
 @pytest.fixture

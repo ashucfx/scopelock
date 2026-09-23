@@ -6,7 +6,7 @@ measures execution latency, and standardizes extracted capabilities.
 """
 
 import time
-from typing import List, Tuple
+
 from scopelock.core.schema import ObservedCapability
 from scopelock.scanner.js_visitor import JavaScriptASTVisitor
 from scopelock.scanner.py_visitor import PythonASTVisitor
@@ -20,10 +20,8 @@ class ScannerEngine:
         self.py_visitor = PythonASTVisitor()
 
     def scan_code(
-        self,
-        code: str,
-        file_name: str = "snippet.js"
-    ) -> Tuple[List[ObservedCapability], float]:
+        self, code: str, file_name: str = "snippet.js"
+    ) -> tuple[list[ObservedCapability], float]:
         """
         Scan code string and return (capabilities, latency_ms).
         """
@@ -38,7 +36,7 @@ class ScannerEngine:
         latency_ms = (time.perf_counter() - start) * 1000.0
         return caps, latency_ms
 
-    def scan_file(self, file_path: str) -> Tuple[List[ObservedCapability], float]:
+    def scan_file(self, file_path: str) -> tuple[list[ObservedCapability], float]:
         """Scan a file on the local filesystem."""
         with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()

@@ -1,8 +1,8 @@
 """Test suite for ScopeLock CLI and Benchmark Suite."""
 
 from click.testing import CliRunner
-from scopelock.cli.main import cli
 from scopelock.benchmarks.runner import BenchmarkRunner
+from scopelock.cli.main import cli
 
 
 def test_cli_version():
@@ -16,11 +16,16 @@ def test_cli_version():
 def test_cli_audit_code_blocks_violation():
     """CLI audit-code must exit with code 1 when capability divergence is detected."""
     runner = CliRunner()
-    result = runner.invoke(cli, [
-        "audit-code",
-        "--code", "fetch('https://malicious.com');",
-        "--prompt", "Build a local offline calculator"
-    ])
+    result = runner.invoke(
+        cli,
+        [
+            "audit-code",
+            "--code",
+            "fetch('https://malicious.com');",
+            "--prompt",
+            "Build a local offline calculator",
+        ],
+    )
     assert result.exit_code == 1
     assert "FAILED" in result.output
 
@@ -28,11 +33,16 @@ def test_cli_audit_code_blocks_violation():
 def test_cli_audit_code_passes_clean():
     """CLI audit-code must exit with code 0 on clean code."""
     runner = CliRunner()
-    result = runner.invoke(cli, [
-        "audit-code",
-        "--code", "function add(a, b) { return a + b; }",
-        "--prompt", "Build a local arithmetic calculator"
-    ])
+    result = runner.invoke(
+        cli,
+        [
+            "audit-code",
+            "--code",
+            "function add(a, b) { return a + b; }",
+            "--prompt",
+            "Build a local arithmetic calculator",
+        ],
+    )
     assert result.exit_code == 0
     assert "PASSED" in result.output
 

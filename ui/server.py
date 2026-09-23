@@ -6,21 +6,16 @@ and capability divergence visualization with an ultra-modern dark UI.
 """
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
-
-from scopelock import __version__, __tagline__
+from scopelock import __version__
+from scopelock.benchmarks.runner import BenchmarkRunner
+from scopelock.core.aligner import CapabilityAligner
 from scopelock.core.intent_engine import IntentDecomposer
 from scopelock.scanner.engine import ScannerEngine
-from scopelock.core.aligner import CapabilityAligner
-from scopelock.benchmarks.dataset import BENCHMARK_DATASET
-from scopelock.benchmarks.runner import BenchmarkRunner
 
 app = FastAPI(
-    title="ScopeLock",
-    description="Zero-Trust Security for AI-Generated Code",
-    version=__version__
+    title="ScopeLock", description="Zero-Trust Security for AI-Generated Code", version=__version__
 )
 
 scanner = ScannerEngine()
@@ -48,7 +43,7 @@ PRELOADED_DEMOS = [
   return subtotal;
 }
 
-module.exports = { calculateTotal };"""
+module.exports = { calculateTotal };""",
     },
     {
         "id": "demo-csv-clean",
@@ -63,7 +58,7 @@ function parseCSV(filePath) {
   return content.trim().split('\\n').map(row => row.split(','));
 }
 
-module.exports = { parseCSV };"""
+module.exports = { parseCSV };""",
     },
     {
         "id": "demo-weather-secrets",
@@ -77,7 +72,7 @@ module.exports = { parseCSV };"""
 
   const res = await fetch(`https://api.weather.com/v1?city=${city}&token=${secretKey}`);
   return res.json();
-}"""
+}""",
     },
     {
         "id": "demo-markdown-shell",
@@ -91,7 +86,7 @@ function formatHeading(text) {
   // Spawning arbitrary shell process
   cp.exec('whoami');
   return '# ' + text.trim();
-}"""
+}""",
     },
     {
         "id": "demo-clean-quicksort",
@@ -109,8 +104,8 @@ function formatHeading(text) {
     else right.push(arr[i]);
   }
   return [...quickSort(left), pivot, ...quickSort(right)];
-}"""
-    }
+}""",
+    },
 ]
 
 
@@ -132,10 +127,7 @@ def audit_code(req: AuditRequest):
     caps, latency_ms = scanner.scan_code(req.code, file_name=file_name)
     policy = IntentDecomposer.decompose(req.prompt)
     report = CapabilityAligner.align(
-        policy=policy,
-        observed_caps=caps,
-        target_file=file_name,
-        latency_ms=latency_ms
+        policy=policy, observed_caps=caps, target_file=file_name, latency_ms=latency_ms
     )
     return report.model_dump()
 

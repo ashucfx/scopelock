@@ -1,10 +1,9 @@
 """Test suite for Intent Decomposer and Alignment."""
 
-import pytest
-from scopelock.core.intent_engine import HeuristicIntentEngine, IntentDecomposer
-from scopelock.core.taxonomy import CapabilityCategory
-from scopelock.core.schema import AuditVerdict, RiskTier
 from scopelock.core.aligner import CapabilityAligner
+from scopelock.core.intent_engine import HeuristicIntentEngine, IntentDecomposer
+from scopelock.core.schema import AuditVerdict, RiskTier
+from scopelock.core.taxonomy import CapabilityCategory
 from scopelock.scanner.engine import ScannerEngine
 
 

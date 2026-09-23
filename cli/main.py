@@ -6,15 +6,16 @@ running empirical benchmarks, and serving the interactive security dashboard.
 """
 
 import sys
+
 import click
 from colorama import Fore, Style, init
 
-from scopelock import __version__, __tagline__
-from scopelock.core.intent_engine import IntentDecomposer
-from scopelock.scanner.engine import ScannerEngine
+from scopelock import __version__
 from scopelock.core.aligner import CapabilityAligner
+from scopelock.core.intent_engine import IntentDecomposer
 from scopelock.core.reporter import ReportFormatter
 from scopelock.core.schema import AuditVerdict
+from scopelock.scanner.engine import ScannerEngine
 
 init(autoreset=True)
 
@@ -23,13 +24,16 @@ init(autoreset=True)
 @click.version_option(version=__version__, message="%(prog)s v%(version)s")
 def cli():
     """ScopeLock: Zero-Trust Security for AI-Generated Code."""
-    pass
 
 
 @cli.command()
 @click.argument("file_path", type=click.Path(exists=True, dir_okay=False))
-@click.option("--prompt", "-p", required=True, help="Developer natural-language requirement prompt.")
-@click.option("--json", "as_json", is_flag=True, help="Output structured JSON instead of terminal text.")
+@click.option(
+    "--prompt", "-p", required=True, help="Developer natural-language requirement prompt."
+)
+@click.option(
+    "--json", "as_json", is_flag=True, help="Output structured JSON instead of terminal text."
+)
 @click.option("--sarif", "as_sarif", is_flag=True, help="Output OASIS SARIF format for CI/CD.")
 def scan(file_path: str, prompt: str, as_json: bool, as_sarif: bool):
     """Scan a source file against the stated developer prompt intent."""
@@ -38,10 +42,7 @@ def scan(file_path: str, prompt: str, as_json: bool, as_sarif: bool):
 
     policy = IntentDecomposer.decompose(prompt)
     report = CapabilityAligner.align(
-        policy=policy,
-        observed_caps=caps,
-        target_file=file_path,
-        latency_ms=latency_ms
+        policy=policy, observed_caps=caps, target_file=file_path, latency_ms=latency_ms
     )
 
     if as_json:
@@ -69,10 +70,7 @@ def audit_code(code: str, prompt: str, lang: str):
 
     policy = IntentDecomposer.decompose(prompt)
     report = CapabilityAligner.align(
-        policy=policy,
-        observed_caps=caps,
-        target_file=file_name,
-        latency_ms=latency_ms
+        policy=policy, observed_caps=caps, target_file=file_name, latency_ms=latency_ms
     )
     click.echo(ReportFormatter.to_terminal(report))
 
@@ -85,6 +83,7 @@ def audit_code(code: str, prompt: str, lang: str):
 def benchmark():
     """Execute the 25-Program Empirical Benchmark Suite from the research paper."""
     from scopelock.benchmarks.runner import BenchmarkRunner
+
     runner = BenchmarkRunner()
     runner.run_all()
 
@@ -95,7 +94,10 @@ def benchmark():
 def serve(host: str, port: int):
     """Launch the interactive ScopeLock DevSecOps Web Dashboard."""
     import uvicorn
-    click.echo(Fore.CYAN + Style.BRIGHT + f"Starting ScopeLock Web Dashboard on http://{host}:{port} ...")
+
+    click.echo(
+        Fore.CYAN + Style.BRIGHT + f"Starting ScopeLock Web Dashboard on http://{host}:{port} ..."
+    )
     uvicorn.run("scopelock.ui.server:app", host=host, port=port, reload=False)
 
 

@@ -5,14 +5,14 @@ Executes the 25-program empirical benchmark suite, calculating
 precision, recall, F1-score, false-positive rate, and execution latency.
 """
 
-import time
-from typing import Dict, Any
+from typing import Any
+
 from colorama import Fore, Style, init
 
 from scopelock.benchmarks.dataset import BENCHMARK_DATASET
-from scopelock.scanner.engine import ScannerEngine
-from scopelock.core.intent_engine import IntentDecomposer
 from scopelock.core.aligner import CapabilityAligner
+from scopelock.core.intent_engine import IntentDecomposer
+from scopelock.scanner.engine import ScannerEngine
 
 init(autoreset=True)
 
@@ -23,10 +23,14 @@ class BenchmarkRunner:
     def __init__(self):
         self.scanner = ScannerEngine()
 
-    def run_all(self) -> Dict[str, Any]:
+    def run_all(self) -> dict[str, Any]:
         """Run all 25 benchmark programs and compute scientific metrics."""
         print(Fore.CYAN + Style.BRIGHT + "\n" + "=" * 70)
-        print(Fore.CYAN + Style.BRIGHT + " SCOPELOCK: 25-PROGRAM EMPIRICAL BENCHMARK EVALUATION ".center(70))
+        print(
+            Fore.CYAN
+            + Style.BRIGHT
+            + " SCOPELOCK: 25-PROGRAM EMPIRICAL BENCHMARK EVALUATION ".center(70)
+        )
         print(Fore.CYAN + Style.BRIGHT + "=" * 70 + "\n")
 
         tp = 0  # Violation present & flagged
@@ -35,7 +39,9 @@ class BenchmarkRunner:
         fn = 0  # Violation present but missed
         total_latency_ms = 0.0
 
-        print(f"{'ID':<6} {'Task Summary':<32} {'Expected':<10} {'Detected':<10} {'Latency':<10} {'Status'}")
+        print(
+            f"{'ID':<6} {'Task Summary':<32} {'Expected':<10} {'Detected':<10} {'Latency':<10} {'Status'}"
+        )
         print("-" * 75)
 
         for case in BENCHMARK_DATASET:
@@ -47,7 +53,9 @@ class BenchmarkRunner:
             total_latency_ms += latency
 
             policy = IntentDecomposer.decompose(task)
-            report = CapabilityAligner.align(policy, caps, target_file=f"{case['id']}.js", latency_ms=latency)
+            report = CapabilityAligner.align(
+                policy, caps, target_file=f"{case['id']}.js", latency_ms=latency
+            )
 
             detected_v = report.total_violations
 
@@ -66,7 +74,9 @@ class BenchmarkRunner:
                 status = Fore.RED + "FAIL (FN)" + Style.RESET_ALL
 
             task_trunc = (task[:30] + "..") if len(task) > 32 else task
-            print(f"{case['id']:<6} {task_trunc:<32} {expected_v:<10} {detected_v:<10} {latency:.2f}ms   {status}")
+            print(
+                f"{case['id']:<6} {task_trunc:<32} {expected_v:<10} {detected_v:<10} {latency:.2f}ms   {status}"
+            )
 
         total_tested = len(BENCHMARK_DATASET)
         avg_latency = total_latency_ms / total_tested
@@ -86,7 +96,11 @@ class BenchmarkRunner:
         print(Fore.GREEN + Style.BRIGHT + f"Precision              : {precision:.2f}%")
         print(Fore.GREEN + Style.BRIGHT + f"Recall (Sensitivity)   : {recall:.2f}%")
         print(Fore.GREEN + Style.BRIGHT + f"F1-Score               : {f1:.2f}%")
-        print(Fore.YELLOW + Style.BRIGHT + f"Average Latency        : {avg_latency:.2f} milliseconds per program")
+        print(
+            Fore.YELLOW
+            + Style.BRIGHT
+            + f"Average Latency        : {avg_latency:.2f} milliseconds per program"
+        )
         print("=" * 70 + "\n")
 
         return {
@@ -99,7 +113,7 @@ class BenchmarkRunner:
             "precision": precision,
             "recall": recall,
             "f1": f1,
-            "avg_latency_ms": avg_latency
+            "avg_latency_ms": avg_latency,
         }
 
 
