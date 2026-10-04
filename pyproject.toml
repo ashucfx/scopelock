@@ -56,6 +56,12 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.6.0"
 ]
+docs = [
+    "mkdocs-material>=9.5.0",
+    "mkdocs-minify-plugin>=0.7.0",
+    "mkdocstrings[python]>=0.24.0",
+    "mike>=2.0.0",
+]
 
 [project.scripts]
 scopelock = "scopelock.cli.main:cli"

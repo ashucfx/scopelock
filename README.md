@@ -78,7 +78,7 @@ function calculateTotal(price, taxRate) {
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/ripplenexus/scopelock.git
+git clone https://github.com/ashucfx/scopelock.git
 cd scopelock
 
 # Install in production editable mode

@@ -133,7 +133,7 @@ class ReportFormatter:
                         "driver": {
                             "name": "ScopeLock",
                             "semanticVersion": report.engine_version,
-                            "informationUri": "https://github.com/ripplenexus/scopelock",
+                            "informationUri": "https://github.com/ashucfx/scopelock",
                         }
                     },
                     "results": sarif_results,

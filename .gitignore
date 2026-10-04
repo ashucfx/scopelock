@@ -31,8 +31,13 @@ desktop.ini
 *.log
 *.tmp
 *.docx
+*.pdf
 generate_dossier_docx.py
 build_beautiful_docs_pdf.py
+build_plan_pdf.py
 
-# Entire docs directory ignored
-docs/
+# Legacy root docs directory ignored
+/docs/
+# MkDocs build output
+docs-site/site/
+site/

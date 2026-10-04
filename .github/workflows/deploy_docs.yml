@@ -1,0 +1,48 @@
+name: Deploy Documentation to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs-site/**"
+      - "mkdocs.yml"
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-docs:
+    name: Build & Deploy MkDocs Site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git-revision-date plugin
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install MkDocs and Dependencies
+        run: |
+          pip install \
+            mkdocs-material \
+            mkdocs-minify-plugin \
+            mkdocstrings[python] \
+            mike
+
+      - name: Build and Deploy Documentation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mkdocs gh-deploy --force --clean --verbose
+
+      - name: Deployment Summary
+        run: |
+          echo "✅ Documentation deployed to: https://ashucfx.github.io/scopelock"

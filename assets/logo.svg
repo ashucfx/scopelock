@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#0a0f1d"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+
+    <!-- Shield Face Gradient -->
+    <linearGradient id="shieldGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" stop-opacity="0.35"/>
+      <stop offset="50%" stop-color="#0369a1" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.6"/>
+    </linearGradient>
+
+    <!-- Neon Stroke Gradient -->
+    <linearGradient id="neonCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="40%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded canvas -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <rect width="508" height="508" x="2" y="2" rx="110" fill="none" stroke="#1e293b" stroke-width="3"/>
+
+  <!-- Lock Shackle (Top Arc) -->
+  <path d="M 206 170 V 126 C 206 98 228 76 256 76 C 284 76 306 98 306 126 V 170" 
+        fill="none" 
+        stroke="url(#neonCyan)" 
+        stroke-width="20" 
+        stroke-linecap="round"
+        filter="url(#neonGlow)"/>
+
+  <!-- Main Cyber Shield Geometry -->
+  <path d="M 256 160 L 388 206 C 388 304 330 384 256 426 C 182 384 124 304 124 206 Z" 
+        fill="url(#shieldGrad)" 
+        stroke="url(#neonCyan)" 
+        stroke-width="12" 
+        stroke-linejoin="round"
+        filter="url(#neonGlow)"/>
+
+  <!-- Inner Shield Bevel Line -->
+  <path d="M 256 182 L 366 220 C 366 298 316 364 256 400 C 196 364 146 298 146 220 Z" 
+        fill="none" 
+        stroke="#38bdf8" 
+        stroke-opacity="0.3" 
+        stroke-width="3" 
+        stroke-linejoin="round"/>
+
+  <!-- Scope Reticle: Outer Circle -->
+  <circle cx="256" cy="286" r="68" fill="none" stroke="#38bdf8" stroke-width="4" stroke-opacity="0.75"/>
+  <circle cx="256" cy="286" r="46" fill="none" stroke="url(#neonCyan)" stroke-width="5" filter="url(#neonGlow)"/>
+
+  <!-- Scope Reticle Crosshairs (Precision Laser Lines) -->
+  <!-- Horizontal Crosshair -->
+  <line x1="154" y1="286" x2="226" y2="286" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" filter="url(#neonGlow)"/>
+  <line x1="286" y1="286" x2="358" y2="286" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" filter="url(#neonGlow)"/>
+
+  <!-- Vertical Crosshair -->
+  <line x1="256" y1="196" x2="256" y2="256" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" filter="url(#neonGlow)"/>
+  <line x1="256" y1="316" x2="256" y2="376" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" filter="url(#neonGlow)"/>
+
+  <!-- Center Target Core Glowing Dot -->
+  <circle cx="256" cy="286" r="9" fill="#38bdf8" filter="url(#neonGlow)"/>
+  <circle cx="256" cy="286" r="4" fill="#ffffff"/>
+</svg>

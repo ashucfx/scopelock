@@ -1,0 +1,136 @@
+site_name: ScopeLock
+site_description: "Zero-Trust Security & Capability-Divergence Gate for AI-Generated Software"
+site_url: https://ashucfx.github.io/scopelock
+repo_url: https://github.com/ashucfx/scopelock
+repo_name: ashucfx/scopelock
+edit_uri: edit/main/docs-site/docs/
+
+copyright: "Copyright &copy; 2026 Ashutosh Shukla, Ayush Narayan Gupta, Ayush Kumar, Ankit Mishra — Apache 2.0 License"
+
+docs_dir: docs-site/docs
+site_dir: docs-site/site
+
+theme:
+  name: material
+  custom_dir: docs-site/overrides
+  logo: assets/logo.png
+  favicon: assets/favicon.png
+  font:
+    text: Inter
+    code: JetBrains Mono
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: cyan
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: cyan
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - announce.dismiss
+    - toc.integrate
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quickstart: getting-started/quickstart.md
+    - Your First Audit: getting-started/first-audit.md
+  - CLI Reference:
+    - Overview: cli/overview.md
+    - scan: cli/scan.md
+    - scan-project: cli/scan-project.md
+    - audit-code: cli/audit-code.md
+    - serve: cli/serve.md
+    - benchmark: cli/benchmark.md
+    - init-hooks: cli/init-hooks.md
+  - Concepts:
+    - The Intent Gap: concepts/intent-gap.md
+    - Intent Engine: concepts/intent-engine.md
+    - Capability Taxonomy: concepts/taxonomy.md
+    - Divergence Scoring: concepts/divergence.md
+    - SARIF Output: concepts/sarif.md
+  - Integrations:
+    - GitHub Actions: integrations/github-actions.md
+    - Pre-commit Hooks: integrations/pre-commit.md
+    - VS Code: integrations/vscode.md
+    - In-Code Annotations: integrations/annotations.md
+  - API Reference:
+    - REST API: api/rest-api.md
+    - Python SDK: api/python-sdk.md
+  - Research:
+    - Paper Abstract: research/abstract.md
+    - Benchmark Results: research/benchmarks.md
+    - Comparison with SAST: research/comparison.md
+  - Contributing: contributing.md
+  - Changelog: changelog.md
+
+plugins:
+  - search:
+      lang: en
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - admonition
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+  - tables
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ashucfx/scopelock
+      name: ScopeLock on GitHub
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/scopelock/
+      name: ScopeLock on PyPI
+  version:
+    provider: mike
+  analytics:
+    provider: google
+    property: G-XXXXXXXXXX
+
+extra_css:
+  - assets/extra.css
