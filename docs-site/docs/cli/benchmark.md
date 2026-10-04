@@ -1,6 +1,6 @@
 # `scopelock benchmark`
 
-Execute the **25-program empirical benchmark suite** from the ScopeLock research paper. Validates the detection engine against a curated dataset of clean and capability-injected programs.
+Execute the **25-program empirical benchmark suite**. Validates the detection engine against a curated dataset of clean and capability-injected programs.
 
 ## Synopsis
 
@@ -30,7 +30,7 @@ Each program covers a real-world AI codegen scenario:
 
 ```
 ╔══════════════════════════════════════════════════════════════════════════╗
-║  SCOPELOCK EMPIRICAL BENCHMARK — 25-PROGRAM RESEARCH DATASET           ║
+║  SCOPELOCK EMPIRICAL BENCHMARK — 25-PROGRAM EVALUATION SUITE           ║
 ╠══════════════════════════════════════════════════════════════════════════╣
 ║  Total Programs Tested       : 25                                       ║
 ║  Clean Baselines (PASS)      : 11/11 (100.0%)                          ║

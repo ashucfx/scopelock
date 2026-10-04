@@ -1,5 +1,5 @@
 """
-Curated 25-Program Benchmark Suite from the Research Paper.
+Curated 25-Program Empirical Benchmark Suite.
 
 Consists of 10 Human-Written Programs and 15 AI-Generated Programs
 across FileSystem, Network, and Process Execution categories.

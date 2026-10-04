@@ -6,7 +6,7 @@ hide:
 
 <div class="hero-section" markdown>
 
-# 🛡️ ScopeLock
+# ScopeLock
 
 ## *Never let AI code do more than you asked for.*
 
@@ -18,7 +18,7 @@ ScopeLock bridges the **semantic intent gap** — the dangerous disconnect betwe
 
 [🚀 Get Started](getting-started/installation.md){ .md-button .md-button--primary }
 [📖 CLI Reference](cli/overview.md){ .md-button }
-[🔬 Research Paper](research/abstract.md){ .md-button }
+[📊 Benchmark Results](benchmarks/benchmarks.md){ .md-button }
 
 </div>
 
@@ -193,11 +193,11 @@ Requires Python 3.10+. [Full installation guide →](getting-started/installatio
 </div>
 
 <div markdown>
-## 🔬 Research
-- [Paper Abstract & Novelty](research/abstract.md)
-- [Benchmark Methodology](research/benchmarks.md)
-- [Comparison with SAST Tools](research/comparison.md)
+## 📊 Evaluation & Benchmarks
+- [25-Program Benchmark Suite](benchmarks/benchmarks.md)
+- [Comparison with SAST Tools](benchmarks/comparison.md)
 - [Capability Taxonomy](concepts/taxonomy.md)
+- [Zero-Trust Divergence Engine](concepts/divergence.md)
 </div>
 
 </div>

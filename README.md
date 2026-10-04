@@ -108,7 +108,7 @@ scopelock serve --port 8000
 
 ---
 
-## 4. Empirical Benchmark Results (Research Paper Dataset)
+## 4. Empirical Benchmark Results (25-Program Evaluation Suite)
 
 Evaluated across **25 representative programs** (11 clean baselines, 14 capability-injected programs):
 

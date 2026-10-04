@@ -5,7 +5,7 @@ repo_url: https://github.com/ashucfx/scopelock
 repo_name: ashucfx/scopelock
 edit_uri: edit/main/docs-site/docs/
 
-copyright: "Copyright &copy; 2026 Ashutosh Shukla, Ayush Narayan Gupta, Ayush Kumar, Ankit Mishra — Apache 2.0 License"
+copyright: "Copyright &copy; 2026 ScopeLock Contributors — Apache 2.0 License"
 
 docs_dir: docs-site/docs
 site_dir: docs-site/site
@@ -13,8 +13,8 @@ site_dir: docs-site/site
 theme:
   name: material
   custom_dir: docs-site/overrides
-  logo: assets/logo.png
-  favicon: assets/favicon.png
+  logo: assets/logo.svg
+  favicon: assets/favicon.ico
   font:
     text: Inter
     code: JetBrains Mono
@@ -77,10 +77,9 @@ nav:
   - API Reference:
     - REST API: api/rest-api.md
     - Python SDK: api/python-sdk.md
-  - Research:
-    - Paper Abstract: research/abstract.md
-    - Benchmark Results: research/benchmarks.md
-    - Comparison with SAST: research/comparison.md
+  - Benchmarks & Evaluation:
+    - Benchmark Suite: benchmarks/benchmarks.md
+    - Comparison with SAST: benchmarks/comparison.md
   - Contributing: contributing.md
   - Changelog: changelog.md
 

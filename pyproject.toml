@@ -10,10 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
 authors = [
-    { name = "Ashutosh Shukla", email = "ashutosh@scopelock.dev" },
-    { name = "Ayush Narayan Gupta" },
-    { name = "Ayush Kumar" },
-    { name = "Ankit Mishra" }
+    { name = "ScopeLock Contributors", email = "maintainers@scopelock.dev" }
 ]
 keywords = [
     "security",
