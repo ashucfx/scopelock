@@ -32,9 +32,10 @@ desktop.ini
 *.tmp
 *.docx
 *.pdf
-generate_dossier_docx.py
-build_beautiful_docs_pdf.py
-build_plan_pdf.py
+scripts/
+dist/
+build/
+*.egg-info/
 
 # Legacy root docs directory ignored
 /docs/
