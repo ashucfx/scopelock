@@ -62,12 +62,18 @@ class CapabilityAligner:
 
         # Standard alignment logic: Check each observed capability
         for obs in observed_caps:
+            category_allowed = (
+                obs.category in policy.allowed_categories
+                and obs.category not in policy.disallowed_categories
+            )
             is_allowed = cls._is_authorized(policy, obs)
 
             if not is_allowed:
-                # UNJUSTIFIED VIOLATION
+                # A permitted category with an invalid action/scope is suspicious;
+                # a denied category is an outright policy violation.
+                verdict = RiskTier.SUSPICIOUS if category_allowed else RiskTier.UNJUSTIFIED
                 score = (
-                    0.95
+                    0.65 if category_allowed else 0.95
                     if obs.category
                     in (
                         CapabilityCategory.PROCESS,
@@ -79,10 +85,11 @@ class CapabilityAligner:
 
                 finding = DivergenceFinding(
                     observed=obs,
-                    verdict=RiskTier.UNJUSTIFIED,
+                    verdict=verdict,
                     risk_score=score,
                     finding=(
-                        f"Unjustified {obs.category.value} capability detected. "
+                        f"{'Suspicious' if category_allowed else 'Unjustified'} "
+                        f"{obs.category.value} capability detected. "
                         f"The stated intent '{policy.stated_intent}' does not authorize "
                         f"invoking '{obs.raw_call}'."
                     ),
