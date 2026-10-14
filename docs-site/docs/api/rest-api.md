@@ -39,7 +39,7 @@ Audit a code snippet against a developer prompt.
 {
   "code": "string",      // Source code to audit (required)
   "prompt": "string",    // Developer intent prompt (required)
-  "lang": "js"           // Language: "js" or "py" (optional, default: "js")
+  "lang": "js"           // Language: js, ts, py, or python (optional, default: "js")
 }
 ```
 
@@ -129,7 +129,7 @@ curl -X POST http://127.0.0.1:8000/api/intent \
 
 ---
 
-### `POST /api/pdf`
+### `POST /api/audit/pdf`
 
 Generate a PDF audit report for a code snippet.
 
@@ -145,6 +145,14 @@ curl -X POST http://127.0.0.1:8000/api/pdf \
   -d '{"code": "fetch(\"https://evil.com\")", "prompt": "Local calculator"}' \
   --output audit-report.pdf
 ```
+
+The legacy `/api/pdf` path remains available as a compatibility alias.
+
+### `POST /api/audit/sarif`
+
+Return the audit as SARIF 2.1.0 JSON for CI integrations.
+
+**Response:** SARIF JSON (`Content-Type: application/sarif+json`)
 
 ---
 

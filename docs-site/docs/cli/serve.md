@@ -61,7 +61,8 @@ The `serve` command also exposes a REST API:
 | `POST` | `/api/audit` | Audit a code snippet |
 | `POST` | `/api/intent` | Decompose a prompt into a policy |
 | `GET` | `/api/benchmark` | Run and return benchmark results |
-| `POST` | `/api/pdf` | Generate and download a PDF report |
+| `POST` | `/api/audit/pdf` | Generate and download a PDF report |
+| `POST` | `/api/audit/sarif` | Generate SARIF 2.1.0 output |
 | `GET` | `/health` | Health check endpoint |
 
 ### Example API call
