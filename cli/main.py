@@ -65,7 +65,15 @@ def scan(file_path: str, prompt: str, as_json: bool, as_sarif: bool):
 @click.argument("directory", default=".", type=click.Path(exists=True, file_okay=False))
 @click.option("--policy", "policy_file", help="Path to scopelock.json configuration policy.")
 @click.option("--pdf", "pdf_output", help="Optional output path to save a PDF summary report.")
-def scan_project(directory: str, policy_file: str | None, pdf_output: str | None):
+@click.option("--json", "as_json", is_flag=True, help="Output structured project JSON.")
+@click.option("--sarif", "as_sarif", is_flag=True, help="Output aggregate SARIF for CI/CD.")
+def scan_project(
+    directory: str,
+    policy_file: str | None,
+    pdf_output: str | None,
+    as_json: bool,
+    as_sarif: bool,
+):
     """
     Recursively audit an entire codebase directory.
     Automatically extracts in-code '// @intent: ...' comment headers.
@@ -73,6 +81,13 @@ def scan_project(directory: str, policy_file: str | None, pdf_output: str | None
     click.echo(Fore.CYAN + Style.BRIGHT + f"\n[SCAN] ScopeLock scanning project directory: {directory} ...")
     scanner = ProjectScanner(policy_file=policy_file)
     summary = scanner.scan_directory(directory)
+
+    if as_json:
+        click.echo(ReportFormatter.to_project_json(summary))
+        sys.exit(1 if summary.verdict == AuditVerdict.FAILED else 0)
+    if as_sarif:
+        click.echo(ReportFormatter.to_project_sarif(summary))
+        sys.exit(1 if summary.verdict == AuditVerdict.FAILED else 0)
 
     click.echo("\n" + "=" * 70)
     click.echo(Fore.CYAN + Style.BRIGHT + " SCOPELOCK: PROJECT REPOSITORY AUDIT SUMMARY ".center(70))

@@ -20,6 +20,8 @@ scopelock scan-project [DIRECTORY] [OPTIONS]
 |---|---|
 | `--policy FILE` | Path to a `scopelock.json` configuration policy file |
 | `--pdf FILE` | Optional path to save a PDF summary audit report |
+| `--json` | Emit the complete aggregate project report as JSON |
+| `--sarif` | Emit all project findings as SARIF 2.1.0 |
 
 ## Supported File Types
 

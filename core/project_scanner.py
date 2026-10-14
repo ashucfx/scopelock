@@ -26,6 +26,8 @@ class ProjectAuditSummary:
     total_violations: int = 0
     total_latency_ms: float = 0.0
     file_reports: list[AuditReport] = field(default_factory=list)
+    skipped_files: list[str] = field(default_factory=list)
+    scan_errors: list[str] = field(default_factory=list)
     verdict: AuditVerdict = AuditVerdict.PASSED
 
 
@@ -82,6 +84,8 @@ class ProjectScanner:
         summary = ProjectAuditSummary()
 
         if not root.exists():
+            summary.scan_errors.append(f"Directory does not exist: {directory_path}")
+            summary.verdict = AuditVerdict.NEEDS_REVIEW
             return summary
 
         for file_path in root.rglob("*"):
@@ -90,14 +94,16 @@ class ProjectScanner:
                 if any(ignored in file_path.parts for ignored in self.IGNORE_DIRS):
                     continue
 
+                rel_path = str(file_path.relative_to(root)).replace("\\", "/")
                 try:
                     with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                         code = f.read()
-                except OSError:
+                except OSError as exc:
+                    summary.skipped_files.append(rel_path)
+                    summary.scan_errors.append(f"{rel_path}: {exc}")
                     continue
-
                 # 1. Determine intent: in-code header -> policy file -> default
-                rel_path = str(file_path.relative_to(root)).replace("\\", "/")
+                # 1. Determine intent: in-code header -> policy file -> default
                 intent = self.extract_in_code_intent(code)
 
                 if not intent and rel_path in self.policy_data.get("modules", {}):
@@ -109,13 +115,14 @@ class ProjectScanner:
                     intent = f"Module for {stem}"
 
                 # 2. Run AST scan and alignment
-                caps, lat = self.scanner.scan_code(code, file_name=rel_path)
+                caps, lat, diagnostics = self.scanner.scan_code_detailed(code, file_name=rel_path)
                 policy = IntentDecomposer.decompose(intent)
                 report = CapabilityAligner.align(
                     policy=policy,
                     observed_caps=caps,
                     target_file=rel_path,
-                    latency_ms=lat
+                    latency_ms=lat,
+                    diagnostics=diagnostics,
                 )
 
                 summary.scanned_files += 1
@@ -130,6 +137,8 @@ class ProjectScanner:
 
         if summary.violated_files > 0:
             summary.verdict = AuditVerdict.FAILED
+        elif summary.scan_errors or any(report.has_blocking_diagnostics() for report in summary.file_reports):
+            summary.verdict = AuditVerdict.NEEDS_REVIEW
         else:
             summary.verdict = AuditVerdict.PASSED
 

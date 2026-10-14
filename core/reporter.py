@@ -141,3 +141,47 @@ class ReportFormatter:
             ],
         }
         return json.dumps(sarif_doc, indent=2)
+
+    @classmethod
+    def to_project_json(cls, summary) -> str:
+        """Export an aggregate project audit without losing file-level detail."""
+        return json.dumps(
+            {
+                "scanned_files": summary.scanned_files,
+                "clean_files": summary.clean_files,
+                "violated_files": summary.violated_files,
+                "total_violations": summary.total_violations,
+                "total_latency_ms": summary.total_latency_ms,
+                "verdict": summary.verdict.value,
+                "skipped_files": summary.skipped_files,
+                "scan_errors": summary.scan_errors,
+                "file_reports": [report.model_dump(mode="json") for report in summary.file_reports],
+            },
+            indent=2,
+        )
+
+    @classmethod
+    def to_project_sarif(cls, summary) -> str:
+        """Export all project findings as one SARIF run."""
+        results = []
+        for report in summary.file_reports:
+            report_doc = json.loads(cls.to_sarif(report))
+            results.extend(report_doc["runs"][0]["results"])
+
+        sarif_doc = {
+            "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+            "version": "2.1.0",
+            "runs": [
+                {
+                    "tool": {
+                        "driver": {
+                            "name": "ScopeLock",
+                            "semanticVersion": "1.0.0",
+                            "informationUri": "https://github.com/ashucfx/scopelock",
+                        }
+                    },
+                    "results": results,
+                }
+            ],
+        }
+        return json.dumps(sarif_doc, indent=2)
