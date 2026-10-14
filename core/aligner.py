@@ -5,12 +5,15 @@ Computes the set-theoretic difference between observed program authority
 and declared prompt requirements: Δ = C_obs \\ C_exp.
 """
 
+from fnmatch import fnmatchcase
+
 from scopelock.core.schema import (
     AuditReport,
     AuditVerdict,
     DivergenceFinding,
     ObservedCapability,
     RiskTier,
+    ScanDiagnostic,
     ScopePolicy,
 )
 from scopelock.core.taxonomy import CapabilityCategory
@@ -26,11 +29,13 @@ class CapabilityAligner:
         observed_caps: list[ObservedCapability],
         target_file: str = "snippet.js",
         latency_ms: float = 0.0,
+        diagnostics: list[ScanDiagnostic] | None = None,
     ) -> AuditReport:
         """
         Compare observed capabilities against the policy contract.
         """
         findings: list[DivergenceFinding] = []
+        diagnostics = diagnostics or []
 
         # If the intent itself is ambiguous, flag review required
         if policy.is_ambiguous:
@@ -52,11 +57,12 @@ class CapabilityAligner:
                 total_violations=len(findings),
                 final_verdict=AuditVerdict.NEEDS_REVIEW,
                 analysis_latency_ms=latency_ms,
+                diagnostics=diagnostics,
             )
 
         # Standard alignment logic: Check each observed capability
         for obs in observed_caps:
-            is_allowed = obs.category in policy.allowed_categories
+            is_allowed = cls._is_authorized(policy, obs)
 
             if not is_allowed:
                 # UNJUSTIFIED VIOLATION
@@ -127,7 +133,12 @@ class CapabilityAligner:
         violations = [
             f for f in findings if f.verdict in (RiskTier.UNJUSTIFIED, RiskTier.SUSPICIOUS)
         ]
-        final_verdict = AuditVerdict.FAILED if violations else AuditVerdict.PASSED
+        if violations:
+            final_verdict = AuditVerdict.FAILED
+        elif any(d.severity.upper() == "ERROR" for d in diagnostics):
+            final_verdict = AuditVerdict.NEEDS_REVIEW
+        else:
+            final_verdict = AuditVerdict.PASSED
 
         return AuditReport(
             target_file=target_file,
@@ -137,4 +148,31 @@ class CapabilityAligner:
             total_violations=len(violations),
             final_verdict=final_verdict,
             analysis_latency_ms=latency_ms,
+            diagnostics=diagnostics,
         )
+
+    @classmethod
+    def _is_authorized(cls, policy: ScopePolicy, observed: ObservedCapability) -> bool:
+        """Match a capability against category, action, and target scope policy."""
+        if observed.category in policy.disallowed_categories:
+            return False
+        if observed.category not in policy.allowed_categories:
+            return False
+
+        expected = [
+            item
+            for item in policy.expected_capabilities
+            if item.category == observed.category
+        ]
+        if not expected:
+            return True
+
+        for item in expected:
+            action_matches = item.action in (None, "*", observed.action.value)
+            scope_matches = item.target_scope in ("*", None) or (
+                observed.target_scope not in (None, "*")
+                and fnmatchcase(observed.target_scope, item.target_scope)
+            )
+            if action_matches and scope_matches:
+                return True
+        return False
