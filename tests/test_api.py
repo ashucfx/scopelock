@@ -4,7 +4,6 @@ from fastapi.testclient import TestClient
 
 from scopelock.ui.server import app
 
-
 client = TestClient(app)
 
 
