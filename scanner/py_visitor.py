@@ -25,12 +25,23 @@ class PythonASTVisitor:
 
     def scan(self, code: str, file_name: str = "script.py") -> list[ObservedCapability]:
         """Parse Python code string and return observed capabilities."""
+        capabilities, _ = self.scan_detailed(code, file_name)
+        return capabilities
+
+    def scan_detailed(self, code: str, file_name: str = "script.py"):
+        """Parse Python and return capabilities plus syntax error nodes."""
         code_bytes = code.encode("utf-8")
         tree = self.parser.parse(code_bytes)
         capabilities: list[ObservedCapability] = []
 
         self._traverse(tree.root_node, code_bytes, file_name, capabilities)
-        return capabilities
+        return capabilities, self._error_nodes(tree.root_node)
+
+    def _error_nodes(self, node: Node) -> list[Node]:
+        errors = [node] if node.type == "ERROR" else []
+        for child in node.children:
+            errors.extend(self._error_nodes(child))
+        return errors
 
     def _traverse(
         self, node: Node, code_bytes: bytes, file_name: str, results: list[ObservedCapability]

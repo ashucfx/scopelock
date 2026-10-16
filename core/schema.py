@@ -42,6 +42,14 @@ class SourceLocation(BaseModel):
     snippet: str | None = None
 
 
+class ScanDiagnostic(BaseModel):
+    """Parser or scanner diagnostic that affects audit confidence."""
+
+    severity: str = "ERROR"
+    message: str
+    source_location: SourceLocation | None = None
+
+
 class ObservedCapability(BaseModel):
     """A capability extracted statically (AST) or dynamically (sandbox)."""
 
@@ -97,9 +105,14 @@ class AuditReport(BaseModel):
     total_violations: int = 0
     final_verdict: AuditVerdict = AuditVerdict.PASSED
     analysis_latency_ms: float = 0.0
+    diagnostics: list[ScanDiagnostic] = Field(default_factory=list)
     engine_version: str = "1.0.0"
     timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     def has_violations(self) -> bool:
         """Check if any finding is UNJUSTIFIED or SUSPICIOUS."""
         return any(f.verdict in (RiskTier.UNJUSTIFIED, RiskTier.SUSPICIOUS) for f in self.findings)
+
+    def has_blocking_diagnostics(self) -> bool:
+        """Return whether parsing or scanning produced an error."""
+        return any(d.severity.upper() == "ERROR" for d in self.diagnostics)

@@ -7,7 +7,7 @@ measures execution latency, and standardizes extracted capabilities.
 
 import time
 
-from scopelock.core.schema import ObservedCapability
+from scopelock.core.schema import ObservedCapability, ScanDiagnostic, SourceLocation
 from scopelock.scanner.js_visitor import JavaScriptASTVisitor
 from scopelock.scanner.py_visitor import PythonASTVisitor
 
@@ -35,6 +35,28 @@ class ScannerEngine:
 
         latency_ms = (time.perf_counter() - start) * 1000.0
         return caps, latency_ms
+
+    def scan_code_detailed(
+        self, code: str, file_name: str = "snippet.js"
+    ) -> tuple[list[ObservedCapability], float, list[ScanDiagnostic]]:
+        """Scan source and return capabilities plus parser diagnostics."""
+        start = time.perf_counter()
+        visitor = self.py_visitor if file_name.endswith((".py", ".python")) else self.js_visitor
+        caps, error_nodes = visitor.scan_detailed(code, file_name=file_name)
+        diagnostics = [
+            ScanDiagnostic(
+                message=f"Parser reported an error node: {node.text.decode('utf-8', errors='replace')[:120]}",
+                source_location=SourceLocation(
+                    file=file_name,
+                    line=node.start_point[0] + 1,
+                    col=node.start_point[1],
+                    end_line=node.end_point[0] + 1,
+                    end_col=node.end_point[1],
+                ),
+            )
+            for node in error_nodes
+        ]
+        return caps, (time.perf_counter() - start) * 1000.0, diagnostics
 
     def scan_file(self, file_path: str) -> tuple[list[ObservedCapability], float]:
         """Scan a file on the local filesystem."""

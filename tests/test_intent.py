@@ -2,8 +2,15 @@
 
 from scopelock.core.aligner import CapabilityAligner
 from scopelock.core.intent_engine import HeuristicIntentEngine, IntentDecomposer
-from scopelock.core.schema import AuditVerdict, RiskTier
-from scopelock.core.taxonomy import CapabilityCategory
+from scopelock.core.schema import (
+    AuditVerdict,
+    ExpectedCapability,
+    ObservedCapability,
+    RiskTier,
+    ScopePolicy,
+    SourceLocation,
+)
+from scopelock.core.taxonomy import CapabilityAction, CapabilityCategory
 from scopelock.scanner.engine import ScannerEngine
 
 
@@ -58,3 +65,40 @@ def test_alignment_passes_legitimate_code():
     assert report.final_verdict == AuditVerdict.PASSED
     assert report.total_violations == 0
     assert report.findings[0].verdict == RiskTier.JUSTIFIED
+
+
+def test_alignment_enforces_action_and_target_scope():
+    """A permitted category must not authorize unrelated actions or destinations."""
+    policy = ScopePolicy(
+        stated_intent="Fetch weather from the approved service",
+        allowed_categories={CapabilityCategory.NETWORK},
+        expected_capabilities=[
+            ExpectedCapability(
+                category=CapabilityCategory.NETWORK,
+                action=CapabilityAction.NET_HTTP_GET.value,
+                target_scope="api.weather.com/*",
+                justification="The weather provider is required.",
+            )
+        ],
+    )
+    approved = ObservedCapability(
+        category=CapabilityCategory.NETWORK,
+        action=CapabilityAction.NET_HTTP_GET,
+        source_location=SourceLocation(line=1, col=0),
+        raw_call="fetch",
+        target_scope="api.weather.com/current",
+    )
+    disallowed = ObservedCapability(
+        category=CapabilityCategory.NETWORK,
+        action=CapabilityAction.NET_HTTP_POST,
+        source_location=SourceLocation(line=2, col=0),
+        raw_call="fetch",
+        target_scope="evil.example/exfiltrate",
+    )
+
+    report = CapabilityAligner.align(policy, [approved, disallowed])
+
+    assert report.final_verdict == AuditVerdict.FAILED
+    assert report.total_violations == 1
+    assert report.findings[0].verdict == RiskTier.JUSTIFIED
+    assert report.findings[1].verdict == RiskTier.UNJUSTIFIED
