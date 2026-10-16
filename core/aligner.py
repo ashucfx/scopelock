@@ -16,7 +16,6 @@ from scopelock.core.schema import (
     ScanDiagnostic,
     ScopePolicy,
 )
-from scopelock.core.taxonomy import CapabilityCategory
 
 
 class CapabilityAligner:
@@ -69,19 +68,15 @@ class CapabilityAligner:
             is_allowed = cls._is_authorized(policy, obs)
 
             if not is_allowed:
-                # A permitted category with an invalid action/scope is suspicious;
-                # a denied category is an outright policy violation.
-                verdict = RiskTier.SUSPICIOUS if category_allowed else RiskTier.UNJUSTIFIED
-                score = (
-                    0.65 if category_allowed else 0.95
-                    if obs.category
-                    in (
-                        CapabilityCategory.PROCESS,
-                        CapabilityCategory.SECRET,
-                        CapabilityCategory.NETWORK,
-                    )
-                    else 0.75
+                # Scope overruns are suspicious; unauthorized actions and denied
+                # categories are outright policy violations.
+                action_allowed = cls._is_action_authorized(policy, obs)
+                verdict = (
+                    RiskTier.SUSPICIOUS
+                    if category_allowed and action_allowed
+                    else RiskTier.UNJUSTIFIED
                 )
+                score = 0.65 if verdict == RiskTier.SUSPICIOUS else 0.95
 
                 finding = DivergenceFinding(
                     observed=obs,
@@ -159,3 +154,15 @@ class CapabilityAligner:
             if action_matches and scope_matches:
                 return True
         return False
+
+    @classmethod
+    def _is_action_authorized(cls, policy: ScopePolicy, observed: ObservedCapability) -> bool:
+        """Return whether the policy allows this action within its category."""
+        expected = [
+            item
+            for item in policy.expected_capabilities
+            if item.category == observed.category
+        ]
+        return not expected or any(
+            item.action in (None, "*", observed.action.value) for item in expected
+        )
