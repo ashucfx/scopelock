@@ -10,6 +10,7 @@ from typing import Literal
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel, Field
+
 from scopelock import __version__
 from scopelock.benchmarks.runner import BenchmarkRunner
 from scopelock.core.aligner import CapabilityAligner

@@ -1,6 +1,7 @@
 """Test suite for ScopeLock CLI and Benchmark Suite."""
 
 from click.testing import CliRunner
+
 from scopelock.benchmarks.runner import BenchmarkRunner
 from scopelock.cli.main import cli
 
