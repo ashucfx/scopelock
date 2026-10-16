@@ -141,3 +141,85 @@ class ReportFormatter:
             ],
         }
         return json.dumps(sarif_doc, indent=2)
+
+    @classmethod
+    def to_project_json(cls, summary) -> str:
+        """Export an aggregate project audit without losing file-level detail."""
+        return json.dumps(
+            {
+                "scanned_files": summary.scanned_files,
+                "clean_files": summary.clean_files,
+                "violated_files": summary.violated_files,
+                "total_violations": summary.total_violations,
+                "total_latency_ms": summary.total_latency_ms,
+                "verdict": summary.verdict.value,
+                "skipped_files": summary.skipped_files,
+                "scan_errors": summary.scan_errors,
+                "file_reports": [report.model_dump(mode="json") for report in summary.file_reports],
+            },
+            indent=2,
+        )
+
+    @classmethod
+    def to_project_sarif(cls, summary) -> str:
+        """Export all project findings as one SARIF run."""
+        results = []
+        rule_ids = set()
+        for report in summary.file_reports:
+            for finding in report.findings:
+                if finding.verdict not in (RiskTier.UNJUSTIFIED, RiskTier.SUSPICIOUS):
+                    continue
+                category = finding.observed.category.value
+                rule_id = f"SCOPELOCK_{category}"
+                rule_ids.add(rule_id)
+                loc = finding.observed.source_location
+                results.append(
+                    {
+                        "ruleId": rule_id,
+                        "level": "error" if finding.verdict == RiskTier.UNJUSTIFIED else "warning",
+                        "message": {"text": finding.finding},
+                        "locations": [
+                            {
+                                "physicalLocation": {
+                                    "artifactLocation": {"uri": loc.file},
+                                    "region": {"startLine": loc.line, "startColumn": loc.col + 1},
+                                }
+                            }
+                        ],
+                    }
+                )
+
+        sorted_rule_ids = sorted(rule_ids)
+        rule_indexes = {rule_id: index for index, rule_id in enumerate(sorted_rule_ids)}
+        for result in results:
+            result["ruleIndex"] = rule_indexes[result["ruleId"]]
+        rules = [
+            {"id": rule_id, "shortDescription": {"text": rule_id.removeprefix("SCOPELOCK_") + " capability divergence"}}
+            for rule_id in sorted_rule_ids
+        ]
+
+        sarif_doc = {
+            "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+            "version": "2.1.0",
+            "runs": [
+                {
+                    "tool": {
+                        "driver": {
+                            "name": "ScopeLock",
+                            "semanticVersion": summary.file_reports[0].engine_version if summary.file_reports else "1.0.0",
+                            "informationUri": "https://github.com/ashucfx/scopelock",
+                            "rules": rules,
+                        }
+                    },
+                    "results": results,
+                    "properties": {
+                        "scannedFiles": summary.scanned_files,
+                        "cleanFiles": summary.clean_files,
+                        "violatedFiles": summary.violated_files,
+                        "totalViolations": summary.total_violations,
+                        "verdict": summary.verdict.value,
+                    },
+                }
+            ],
+        }
+        return json.dumps(sarif_doc, indent=2)

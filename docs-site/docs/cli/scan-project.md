@@ -20,6 +20,10 @@ scopelock scan-project [DIRECTORY] [OPTIONS]
 |---|---|
 | `--policy FILE` | Path to a `scopelock.json` configuration policy file |
 | `--pdf FILE` | Optional path to save a PDF summary audit report |
+| `--json` | Emit the complete aggregate project report as JSON |
+| `--sarif` | Emit all project findings as SARIF 2.1.0 |
+
+When either machine-readable option is selected, stdout contains only the JSON or SARIF document. The command exits with status `0` only when the audit passes; failed or review-needed audits exit with status `1` so CI jobs can fail closed.
 
 ## Supported File Types
 
@@ -140,4 +144,4 @@ You can define per-module intent policies in a `scopelock.json` file:
 | Code | Meaning |
 |---|---|
 | `0` | All files passed — no violations detected |
-| `1` | At least one file has unjustified capabilities |
+| `1` | The audit failed or needs review, or the project could not be scanned completely |
