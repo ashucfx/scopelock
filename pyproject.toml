@@ -7,7 +7,7 @@ name = "scopelock"
 version = "1.0.0"
 description = "Zero-Trust Security & Capability-Divergence Gate for AI-Generated Software"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 license = { text = "Apache-2.0" }
 authors = [
     { name = "ScopeLock Contributors", email = "maintainers@scopelock.dev" }
@@ -52,7 +52,8 @@ dev = [
     "pytest-cov>=4.1.0",
     "ruff>=0.1.0",
     "mypy>=1.6.0",
-    "httpx2>=2.13.1"
+    "httpx2>=2.13.1",
+    "build>=1.2.0",
 ]
 docs = [
     "mkdocs-material>=9.5.0",
