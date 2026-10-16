@@ -51,7 +51,8 @@ dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
     "ruff>=0.1.0",
-    "mypy>=1.6.0"
+    "mypy>=1.6.0",
+    "httpx2>=2.13.1"
 ]
 docs = [
     "mkdocs-material>=9.5.0",
@@ -84,3 +85,6 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+[tool.ruff.lint.isort]
+known-first-party = ["scopelock"]

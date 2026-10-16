@@ -1,6 +1,7 @@
 """Test suite for Python AST visitor."""
 
 import pytest
+
 from scopelock.core.taxonomy import CapabilityCategory
 from scopelock.scanner.py_visitor import PythonASTVisitor
 

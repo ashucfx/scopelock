@@ -5,14 +5,18 @@ FastAPI application providing real-time code auditing, intent extraction,
 instant PDF security audit report generation, and capability divergence visualization.
 """
 
+from typing import Literal
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
 from scopelock import __version__
 from scopelock.benchmarks.runner import BenchmarkRunner
 from scopelock.core.aligner import CapabilityAligner
 from scopelock.core.intent_engine import IntentDecomposer
 from scopelock.core.pdf_generator import PDFReportGenerator
+from scopelock.core.reporter import ReportFormatter
 from scopelock.scanner.engine import ScannerEngine
 
 app = FastAPI(
@@ -25,9 +29,32 @@ scanner = ScannerEngine()
 
 
 class AuditRequest(BaseModel):
-    code: str
-    prompt: str
-    lang: str = "js"
+    code: str = Field(min_length=1, max_length=1_000_000)
+    prompt: str = Field(min_length=1, max_length=20_000)
+    lang: Literal["js", "javascript", "ts", "typescript", "py", "python"] = "js"
+
+
+class IntentRequest(BaseModel):
+    prompt: str = Field(min_length=1, max_length=20_000)
+
+
+def _audit_request(req: AuditRequest):
+    """Run the shared audit pipeline for HTTP endpoints."""
+    if not req.code.strip():
+        raise HTTPException(status_code=400, detail="Source code cannot be empty.")
+    if not req.prompt.strip():
+        raise HTTPException(status_code=400, detail="Intent prompt cannot be empty.")
+    extension = "py" if req.lang in ("py", "python") else "js"
+    file_name = f"snippet.{extension}"
+    caps, latency_ms, diagnostics = scanner.scan_code_detailed(req.code, file_name=file_name)
+    policy = IntentDecomposer.decompose(req.prompt)
+    return CapabilityAligner.align(
+        policy=policy,
+        observed_caps=caps,
+        target_file=file_name,
+        latency_ms=latency_ms,
+        diagnostics=diagnostics,
+    )
 
 
 PRELOADED_DEMOS = [
@@ -118,43 +145,28 @@ def get_demos():
     return PRELOADED_DEMOS
 
 
+@app.get("/health")
+def health():
+    """Return service readiness information."""
+    return {"status": "ok", "version": __version__}
+
+
+@app.post("/api/intent")
+def decompose_intent(req: IntentRequest):
+    """Convert a developer requirement into a capability policy."""
+    return IntentDecomposer.decompose(req.prompt).model_dump()
+
+
 @app.post("/api/audit")
 def audit_code(req: AuditRequest):
     """Perform real-time capability divergence audit."""
-    if not req.code.strip():
-        raise HTTPException(status_code=400, detail="Source code cannot be empty.")
-    if not req.prompt.strip():
-        raise HTTPException(status_code=400, detail="Intent prompt cannot be empty.")
-
-    file_name = f"snippet.{req.lang}"
-    caps, latency_ms = scanner.scan_code(req.code, file_name=file_name)
-    policy = IntentDecomposer.decompose(req.prompt)
-    report = CapabilityAligner.align(
-        policy=policy,
-        observed_caps=caps,
-        target_file=file_name,
-        latency_ms=latency_ms,
-    )
-    return report.model_dump()
+    return _audit_request(req).model_dump()
 
 
 @app.post("/api/audit/pdf")
 def generate_pdf_report(req: AuditRequest):
     """Generate and download a professional PDF audit report for the given code and prompt."""
-    if not req.code.strip():
-        raise HTTPException(status_code=400, detail="Source code cannot be empty.")
-    if not req.prompt.strip():
-        raise HTTPException(status_code=400, detail="Intent prompt cannot be empty.")
-
-    file_name = f"snippet.{req.lang}"
-    caps, latency_ms = scanner.scan_code(req.code, file_name=file_name)
-    policy = IntentDecomposer.decompose(req.prompt)
-    report = CapabilityAligner.align(
-        policy=policy,
-        observed_caps=caps,
-        target_file=file_name,
-        latency_ms=latency_ms,
-    )
+    report = _audit_request(req)
 
     pdf_bytes = PDFReportGenerator.generate(report)
     clean_title = "".join(c if c.isalnum() else "_" for c in report.policy.application_name)[:30]
@@ -165,6 +177,19 @@ def generate_pdf_report(req: AuditRequest):
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@app.post("/api/pdf", include_in_schema=False)
+def generate_pdf_report_legacy(req: AuditRequest):
+    """Backward-compatible alias for the documented PDF endpoint."""
+    return generate_pdf_report(req)
+
+
+@app.post("/api/audit/sarif")
+def generate_sarif_report(req: AuditRequest):
+    """Return a SARIF 2.1.0 audit result for CI integrations."""
+    report = _audit_request(req)
+    return Response(content=ReportFormatter.to_sarif(report), media_type="application/sarif+json")
 
 
 @app.get("/api/benchmark")
