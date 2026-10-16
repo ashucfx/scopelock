@@ -87,3 +87,4 @@ target-version = "py310"
 
 [tool.ruff.lint.isort]
 known-first-party = ["scopelock"]
+known-third-party = ["fastapi"]
