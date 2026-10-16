@@ -267,6 +267,47 @@ class ReportFormatter:
                         "totalViolations": summary.total_violations,
                         "verdict": summary.verdict.value,
                     },
+                    "invocations": [
+                        {
+                            "executionSuccessful": True,
+                            "toolExecutionNotifications": [
+                                {
+                                    "level": (
+                                        "error"
+                                        if diagnostic.severity.upper() == "ERROR"
+                                        else "warning"
+                                    ),
+                                    "message": {"text": diagnostic.message},
+                                    **(
+                                        {
+                                            "locations": [
+                                                {
+                                                    "physicalLocation": {
+                                                        "artifactLocation": {
+                                                            "uri": diagnostic.source_location.file
+                                                        },
+                                                        "region": {
+                                                            "startLine": diagnostic.source_location.line,
+                                                            "startColumn": diagnostic.source_location.col
+                                                            + 1,
+                                                        },
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                        if diagnostic.source_location
+                                        else {}
+                                    ),
+                                }
+                                for report in summary.file_reports
+                                for diagnostic in report.diagnostics
+                            ]
+                            + [
+                                {"level": "error", "message": {"text": error}}
+                                for error in summary.scan_errors
+                            ],
+                        }
+                    ],
                 }
             ],
         }

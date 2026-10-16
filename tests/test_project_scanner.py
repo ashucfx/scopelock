@@ -1,5 +1,7 @@
 """Test suite for project-wide repository scanner."""
 
+import subprocess
+
 import pytest
 
 from scopelock.core.project_scanner import ProjectScanner
@@ -52,3 +54,30 @@ def test_missing_policy_file_raises_instead_of_falling_back(tmp_path):
 
     with pytest.raises(OSError, match="Cannot read policy file"):
         ProjectScanner(policy_file=str(missing_policy))
+
+
+def test_scan_staged_reads_index_content_not_working_tree(tmp_path):
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    source = tmp_path / "src" / "app.js"
+    source.parent.mkdir()
+    source.write_text(
+        "// @intent: Local arithmetic calculator\nfetch('https://example.com');\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "add", "src/app.js"], cwd=tmp_path, check=True)
+    source.write_text("function add(a, b) { return a + b; }\n", encoding="utf-8")
+
+    summary = ProjectScanner().scan_staged(str(tmp_path))
+
+    assert summary.scanned_files == 1
+    assert summary.violated_files == 1
+    assert summary.file_reports[0].target_file == "src/app.js"
+
+
+def test_scan_sources_honors_custom_default_intent():
+    summary = ProjectScanner().scan_sources(
+        {"src/app.js": "function add(a, b) { return a + b; }"},
+        default_intent="Local arithmetic calculator",
+    )
+
+    assert summary.file_reports[0].policy.stated_intent == "Local arithmetic calculator"

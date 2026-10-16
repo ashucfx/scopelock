@@ -14,7 +14,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 - **Core AST Scanner** — Tree-sitter-based JavaScript and Python static analysis
 - **Intent Decomposer Engine** — Deterministic heuristic + GPT-4o-mini fallback
 - **Zero-Trust Aligner** — Set-theoretic capability divergence computation (Δ = C_obs \ C_exp)
-- **CLI** — `scan`, `scan-project`, `audit-code`, `serve`, `benchmark`, `init-hooks` commands
+- **CLI** — `scan`, `scan-project`, `scan-staged`, `audit-code`, `serve`, `benchmark`, `init-hooks` commands
 - **Web Dashboard** — FastAPI + dark-mode interactive audit HUD
 - **SARIF Output** — OASIS SARIF 2.1.0 compatible export for CI/CD integration
 - **PDF Reports** — Professional PDF audit report generation
