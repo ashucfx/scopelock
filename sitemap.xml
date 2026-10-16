@@ -2,106 +2,106 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://ashucfx.github.io/scopelock/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/changelog/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/contributing/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/api/python-sdk/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/api/rest-api/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/benchmarks/benchmarks/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/benchmarks/comparison/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/cli/audit-code/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/cli/benchmark/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/cli/init-hooks/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/cli/overview/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/cli/scan-project/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/cli/scan/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/cli/serve/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/concepts/divergence/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/concepts/intent-engine/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/concepts/intent-gap/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/concepts/sarif/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/concepts/taxonomy/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/getting-started/first-audit/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/getting-started/installation/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/getting-started/quickstart/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/integrations/annotations/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/integrations/github-actions/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/integrations/pre-commit/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
     <url>
          <loc>https://ashucfx.github.io/scopelock/integrations/vscode/</loc>
-         <lastmod>2026-10-04</lastmod>
+         <lastmod>2026-10-16</lastmod>
     </url>
 </urlset>
