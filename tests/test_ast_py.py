@@ -2,7 +2,7 @@
 
 import pytest
 
-from scopelock.core.taxonomy import CapabilityCategory
+from scopelock.core.taxonomy import CapabilityAction, CapabilityCategory
 from scopelock.scanner.py_visitor import PythonASTVisitor
 
 
@@ -37,3 +37,11 @@ def test_python_detects_system_and_requests(visitor):
     cats = {c.category for c in caps}
     assert CapabilityCategory.NETWORK in cats
     assert CapabilityCategory.PROCESS in cats
+
+
+def test_python_detects_database_connection(visitor):
+    """Python database connections should be reported as database capabilities."""
+    caps = visitor.scan("sqlite3.connect('app.db')", file_name="db.py")
+    assert len(caps) == 1
+    assert caps[0].category == CapabilityCategory.DATABASE
+    assert caps[0].action == CapabilityAction.DB_CONNECT

@@ -62,3 +62,11 @@ def test_detects_process_env(visitor):
     caps = visitor.scan(code, file_name="auth.js")
     assert len(caps) == 1
     assert caps[0].category == CapabilityCategory.SECRET
+
+
+def test_detects_database_queries(visitor):
+    """Database query calls should be reported as database capabilities."""
+    caps = visitor.scan("client.query('SELECT 1');", file_name="db.js")
+    assert len(caps) == 1
+    assert caps[0].category == CapabilityCategory.DATABASE
+    assert caps[0].action == CapabilityAction.DB_QUERY
