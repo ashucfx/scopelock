@@ -60,6 +60,13 @@ class ScannerEngine:
 
     def scan_file(self, file_path: str) -> tuple[list[ObservedCapability], float]:
         """Scan a file on the local filesystem."""
+        caps, latency_ms, _ = self.scan_file_detailed(file_path)
+        return caps, latency_ms
+
+    def scan_file_detailed(
+        self, file_path: str
+    ) -> tuple[list[ObservedCapability], float, list[ScanDiagnostic]]:
+        """Scan a file and preserve parser diagnostics for fail-closed callers."""
         with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
-        return self.scan_code(content, file_name=file_path)
+        return self.scan_code_detailed(content, file_name=file_path)
