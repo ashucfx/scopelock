@@ -1,7 +1,6 @@
 """Integration tests for the public FastAPI contract."""
 
 from fastapi.testclient import TestClient
-
 from scopelock.ui.server import app
 
 
