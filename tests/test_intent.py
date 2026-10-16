@@ -102,3 +102,11 @@ def test_alignment_enforces_action_and_target_scope():
     assert report.total_violations == 1
     assert report.findings[0].verdict == RiskTier.JUSTIFIED
     assert report.findings[1].verdict == RiskTier.UNJUSTIFIED
+
+
+def test_database_intent_authorizes_database_capabilities():
+    """Database requirements should authorize database access but not network access."""
+    policy = HeuristicIntentEngine.decompose("Build a SQLite database query utility")
+
+    assert CapabilityCategory.DATABASE in policy.allowed_categories
+    assert CapabilityCategory.NETWORK in policy.disallowed_categories

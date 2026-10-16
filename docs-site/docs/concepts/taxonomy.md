@@ -67,10 +67,10 @@ Capabilities that connect to or query databases.
 
 | Action | APIs (JS) | APIs (Python) |
 |---|---|---|
-| `DB_CONNECT` | — | — |
-| `DB_QUERY` | — | — |
+| `DB_CONNECT` | `sqlite3.Database` | `sqlite3.connect`, `psycopg2.connect`, `pymysql.connect` |
+| `DB_QUERY` | `client.query`, `connection.query`, `db.query`, `pool.query` | `sqlite3.execute`, `cursor.execute`, `connection.execute` |
 
-**Note:** Database detection is currently rule-based for common ORM patterns.
+**Note:** Database detection is rule-based and reports common connection and query APIs.
 
 ---
 

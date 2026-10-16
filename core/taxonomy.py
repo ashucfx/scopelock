@@ -70,6 +70,12 @@ JS_SENSITIVE_APIS: dict[str, tuple[CapabilityCategory, CapabilityAction, str]] =
     "https.get": (CapabilityCategory.NETWORK, CapabilityAction.NET_HTTP_GET, "HIGH"),
     "https.request": (CapabilityCategory.NETWORK, CapabilityAction.NET_REQUEST, "HIGH"),
     "WebSocket": (CapabilityCategory.NETWORK, CapabilityAction.NET_SOCKET, "CRITICAL"),
+    # Database
+    "sqlite3.Database": (CapabilityCategory.DATABASE, CapabilityAction.DB_CONNECT, "HIGH"),
+    "client.query": (CapabilityCategory.DATABASE, CapabilityAction.DB_QUERY, "HIGH"),
+    "connection.query": (CapabilityCategory.DATABASE, CapabilityAction.DB_QUERY, "HIGH"),
+    "db.query": (CapabilityCategory.DATABASE, CapabilityAction.DB_QUERY, "HIGH"),
+    "pool.query": (CapabilityCategory.DATABASE, CapabilityAction.DB_QUERY, "HIGH"),
     # Process
     "child_process.exec": (CapabilityCategory.PROCESS, CapabilityAction.PROC_EXEC, "CRITICAL"),
     "child_process.execSync": (CapabilityCategory.PROCESS, CapabilityAction.PROC_EXEC, "CRITICAL"),
@@ -96,6 +102,13 @@ PY_SENSITIVE_APIS: dict[str, tuple[CapabilityCategory, CapabilityAction, str]] =
     "urllib.request.urlopen": (CapabilityCategory.NETWORK, CapabilityAction.NET_REQUEST, "HIGH"),
     "httpx.get": (CapabilityCategory.NETWORK, CapabilityAction.NET_HTTP_GET, "HIGH"),
     "socket.socket": (CapabilityCategory.NETWORK, CapabilityAction.NET_SOCKET, "CRITICAL"),
+    # Database
+    "sqlite3.connect": (CapabilityCategory.DATABASE, CapabilityAction.DB_CONNECT, "HIGH"),
+    "psycopg2.connect": (CapabilityCategory.DATABASE, CapabilityAction.DB_CONNECT, "HIGH"),
+    "pymysql.connect": (CapabilityCategory.DATABASE, CapabilityAction.DB_CONNECT, "HIGH"),
+    "sqlite3.execute": (CapabilityCategory.DATABASE, CapabilityAction.DB_QUERY, "HIGH"),
+    "cursor.execute": (CapabilityCategory.DATABASE, CapabilityAction.DB_QUERY, "HIGH"),
+    "connection.execute": (CapabilityCategory.DATABASE, CapabilityAction.DB_QUERY, "HIGH"),
     # Process
     "os.system": (CapabilityCategory.PROCESS, CapabilityAction.PROC_EXEC, "CRITICAL"),
     "os.popen": (CapabilityCategory.PROCESS, CapabilityAction.PROC_EXEC, "CRITICAL"),

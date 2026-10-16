@@ -159,6 +159,21 @@ class HeuristicIntentEngine:
         elif not has_fs:
             disallowed_categories.add(CapabilityCategory.FILESYSTEM)
 
+        # Database check
+        has_database = any(k in prompt_lower for k in cls.DATABASE_KEYWORDS)
+        if has_database:
+            allowed_categories.add(CapabilityCategory.DATABASE)
+            expected_caps.append(
+                ExpectedCapability(
+                    category=CapabilityCategory.DATABASE,
+                    action="*",
+                    target_scope="*",
+                    justification=f"Prompt mentions database operations: '{prompt}'",
+                )
+            )
+        else:
+            disallowed_categories.add(CapabilityCategory.DATABASE)
+
         # Process check
         has_proc = any(k in prompt_lower for k in cls.PROCESS_KEYWORDS)
         if has_proc:
