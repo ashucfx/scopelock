@@ -55,7 +55,7 @@ $ scopelock scan app.js --prompt "Build a local offline calculator"
 ╠══════════════════════════════════════════════════════════╣
 ║  Policy:    Local offline calculator                    ║
 ║  Verdict:   ❌ FAILED (1 violation)                     ║
-║  Latency:   0.66ms                                      ║
+║  AST parse time: measured for this run                  ║
 ╠══════════════════════════════════════════════════════════╣
 ║  UNJUSTIFIED NETWORK ACCESS                             ║
 ║  Line 4 | fetch() | Risk: 0.95                         ║
@@ -93,32 +93,25 @@ $ scopelock scan app.js --prompt "Build a local offline calculator"
 
     Drop-in GitHub Actions integration. SARIF output uploads directly to GitHub Security tab.
 
--   :material-airplane-off: **100% Offline**
+-   :material-airplane-off: **Offline by Default**
 
     ---
 
-    Deterministic heuristic engine works with zero API calls. No data leaves your machine.
+    The heuristic engine works without API calls. When `OPENAI_API_KEY` is configured, intent decomposition may use the OpenAI API.
 
--   :material-check-all: **100% Precision**
+-   :material-check-all: **Fixture Suite Included**
 
     ---
 
-    Zero false positives on 11 clean baselines. 100% recall on 14 injected over-reach programs.
+    25 curated source fixtures are provided for regression checks. Scores are program-level and do not estimate real-world performance.
 
 </div>
 
 ---
 
-## 📊 Benchmark Results
+## 📊 Fixture-Suite Checks
 
-Evaluated across **25 representative programs** (11 clean, 14 capability-injected):
-
-| Metric | ScopeLock | ESLint / SonarQube |
-|:---|:---:|:---:|
-| **True Positives (Over-reach caught)** | **14/14 (100%)** | 0/14 (0%) |
-| **False Positives (Clean code flagged)** | **0** | N/A |
-| **F1-Score** | **100%** | 0% |
-| **Average Latency** | **0.66ms** | 120ms |
+The included 25 curated fixtures are regression checks, not a measure of real-world accuracy. The runner reports program-level classification and AST parsing time only; it does not count partially detected events or provide comparisons against other analyzers. See [the benchmark notes](benchmarks/benchmarks.md) for scope and limitations.
 
 ---
 
@@ -167,7 +160,7 @@ flowchart TD
     D["Zero-Trust Divergence Engine\nΔ = C_obs \\ C_exp\nDETECTED: NET.fetch Line 4"] --> F & G
 
     F["Interactive Web Dashboard\nFastAPI + Dark-Mode UI"]
-    G["DevSecOps CI/CD Gate\nSARIF Export / PR Blocker"]
+    G["CI Audit Result\nSARIF / Exit Status"]
 ```
 
 ---

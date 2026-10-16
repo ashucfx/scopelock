@@ -3,9 +3,7 @@
 > **"Never let AI code do more than you asked for."**  
 > *Zero-Trust Security & Capability-Divergence Gate for AI-Generated Software*
 
-[![CI Status](https://img.shields.io/badge/CI%2FCD-Passing-brightgreen?style=flat-square)]()
-[![Benchmark Accuracy](https://img.shields.io/badge/Benchmark_Accuracy-100%25-blue?style=flat-square)]()
-[![Average Latency](https://img.shields.io/badge/AST_Latency-%3C1ms-success?style=flat-square)]()
+[![CI Status](https://github.com/ashucfx/scopelock/actions/workflows/scopelock_ci.yml/badge.svg)](https://github.com/ashucfx/scopelock/actions/workflows/scopelock_ci.yml)
 [![Python Support](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-informational?style=flat-square)]()
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square)]()
 
@@ -26,7 +24,7 @@ function calculateTotal(price, taxRate) {
 ```
 
 * **Traditional Linters (ESLint, SonarQube, CodeQL):** Inspect code for syntax bugs and known CVE patterns. They find **zero errors** because `fetch()` is syntactically valid and not inherently vulnerable.
-* **ScopeLock:** Bridges the semantic intent gap. It evaluates whether an API invocation is **justified by the user's declared prompt**. In an offline calculator, network egress is an **unjustified capability divergence** and is blocked immediately.
+* **ScopeLock:** Compares recognized source-level API uses with a policy inferred from the declared prompt. CLI and CI integrations report findings and return a non-zero status for failed or incomplete audits. Static analysis does not prevent runtime effects by itself.
 
 ---
 
@@ -67,7 +65,7 @@ function calculateTotal(price, taxRate) {
               ▼                                                   ▼
 ┌──────────────────────────────┐                 ┌───────────────────────────────────┐
 │    Interactive Web HUD       │                 │       DevSecOps CI/CD Gate        │
-│  (FastAPI + Dark-Mode UI)    │                 │    (SARIF Export / PR Blocker)    │
+│  (FastAPI + Dark-Mode UI)    │                 │    (SARIF Export / Exit Status)  │
 └──────────────────────────────┘                 └───────────────────────────────────┘
 ```
 
@@ -96,7 +94,7 @@ scopelock audit-code --code "fetch('https://evil.com')" --prompt "Local math CLI
 # 3. Export audit results in OASIS SARIF format for CI/CD
 scopelock scan app.js --prompt "Local math CLI" --sarif
 
-# 4. Run the 25-program empirical benchmark suite
+# 4. Run the curated fixture regression checks
 scopelock benchmark
 ```
 
@@ -108,19 +106,11 @@ scopelock serve --port 8000
 
 ---
 
-## 4. Empirical Benchmark Results (25-Program Evaluation Suite)
+## 4. Fixture-Suite Checks
 
-Evaluated across **25 representative programs** (11 clean baselines, 14 capability-injected programs):
+The repository includes **25 curated source fixtures**: 11 labeled without unauthorized capabilities and 14 labeled with at least one. Run `scopelock benchmark` to check the current implementation against these fixtures.
 
-| Metric | Measured Value | Standard SAST / Linter Baseline |
-| :--- | :--- | :--- |
-| **Total Test Scenarios** | **25 Programs** | 25 Programs |
-| **True Positives (Injected Over-reach Caught)** | **14 / 14 (100%)** | 0 / 14 (Missed by linters) |
-| **False Positives (False Alarms on Clean Code)** | **0 (Zero)** | N/A |
-| **Precision** | **100.00%** | N/A |
-| **Recall (Sensitivity)** | **100.00%** | 0.00% |
-| **F1-Score** | **100.00%** | 0.00% |
-| **Average Execution Latency** | **0.66 ms / program** | 120 ms (ESLint / Sonar) |
+The runner reports **program-level** classification: a fixture labeled with one or more violations is counted as detected if the audit reports any violation. It does not measure per-event precision or partial coverage. Its latency is AST parsing time only; it excludes intent decomposition and alignment. These hand-curated fixtures are a regression check, not an estimate of real-world detection performance. No comparisons against other analyzers have been measured by this project.
 
 ---
 

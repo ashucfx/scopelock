@@ -1,87 +1,13 @@
-# Comparison with SAST Tools
+# How ScopeLock Fits with Other Analysis Tools
 
-## Positioning ScopeLock in the Security Landscape
+ScopeLock checks a narrow question: do the capability-bearing API patterns it recognizes appear authorized by the policy inferred from a task description? It can complement other code review and security analysis tools, but it does not replace them.
 
-ScopeLock is **not** a replacement for traditional SAST tools — it is a complementary, intent-aware layer that addresses a class of threats that no existing tool can detect.
+ScopeLock currently recognizes a finite set of JavaScript and Python API patterns. It does not establish program behavior, trace all data flows, identify every vulnerability, or prevent runtime effects. A clean report only means that the scanner found no unauthorized use among the patterns it recognized under the inferred policy.
 
----
+The repository does not maintain a measured feature or performance comparison against ESLint, SonarQube, CodeQL, Semgrep, Snyk, or other analyzers. Their capabilities depend on versions, configuration, and rules; results from this project's small fixture suite should not be used to infer their outcomes.
 
-## Feature Matrix
+## Suggested Use
 
-| Feature | ScopeLock | ESLint | SonarQube | CodeQL | Semgrep | Snyk |
-|---|---|---|---|---|---|---|
-| **Intent-aware analysis** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Capability over-reach detection** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Natural language prompt input** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Offline / zero-API operation** | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **Sub-millisecond latency** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **SARIF output** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Syntax error detection** | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **Known CVE detection** | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Data flow taint analysis** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
-| **Dependency auditing** | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
-| **CI/CD integration** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Pre-commit hooks** | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
+Use ScopeLock's CLI or CI exit status as one review signal alongside tests and the security tools appropriate for the project. Treat `NEEDS_REVIEW`, parser diagnostics, and unsupported code patterns as reasons for manual review. Do not interpret the audit as a runtime sandbox or proof that code is safe.
 
----
-
-## The Key Differentiator
-
-The fundamental difference:
-
-> **Traditional SAST:** *"Is this code syntactically safe?"*  
-> **ScopeLock:** *"Is this code doing exactly what you asked it to do?"*
-
-### Concrete Example
-
-```javascript
-// Developer asked: "Build a local offline calculator"
-function calculateTotal(price, taxRate) {
-  const subtotal = price * (1 + taxRate);
-  fetch("https://analytics.tracker.org/log?val=" + subtotal);
-  return subtotal;
-}
-```
-
-| Tool | Result | Reason |
-|---|---|---|
-| ESLint | ✅ No issues | `fetch()` is valid syntax |
-| SonarQube | ✅ No issues | No CVE pattern matched |
-| CodeQL | ✅ No issues | No user-controlled input in fetch |
-| Semgrep | ✅ No issues | No matching rule in community ruleset |
-| **ScopeLock** | **❌ VIOLATION** | **`fetch()` not authorized for offline calculator** |
-
----
-
-## Recommended Stack
-
-Use ScopeLock **alongside** traditional tools for defense in depth:
-
-```mermaid
-flowchart LR
-    A["AI-Generated Code"] --> B["ESLint / Ruff\nSyntax + Style"]
-    A --> C["SonarQube / CodeQL\nCVE + Taint Analysis"]
-    A --> D["ScopeLock\nIntent + Capability Gate"]
-    A --> E["Snyk\nDependency Audit"]
-    B --> F["✅ Merged"]
-    C --> F
-    D --> F
-    E --> F
-```
-
-Each tool catches what the others miss. ScopeLock fills the **intent gap** that none of the others address.
-
----
-
-## Performance Comparison
-
-```
-Latency to scan a single ~100-line JS file:
-
-ScopeLock  ██ 0.66ms
-ESLint     ████████████████████████████████████████████ 45ms
-SonarQube  ████████████████████████████████████████████████████████████ 120ms
-CodeQL     ████████████████████████████████████████████████████████████████████████████████ 280ms
-```
-
-ScopeLock's Tree-sitter AST analysis is **68× faster than ESLint** and **424× faster than CodeQL**, making it practical for pre-commit hooks and real-time IDE analysis.
+See [fixture-suite checks](benchmarks.md) for the benchmark's scope and limitations.

@@ -18,8 +18,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 - **Web Dashboard** — FastAPI + dark-mode interactive audit HUD
 - **SARIF Output** — OASIS SARIF 2.1.0 compatible export for CI/CD integration
 - **PDF Reports** — Professional PDF audit report generation
-- **25-Program Benchmark** — Empirical evaluation dataset achieving 100% F1-Score
-- **Git Pre-commit Hook** — `scopelock init-hooks` for automated enforcement
+- **25-Program Fixture Suite** — Program-level regression check for recognized capability patterns
+- **Git Pre-commit Hook** — `scopelock init-hooks` hook entry point
 - **In-Code Annotations** — `// @intent:` and `# @intent:` comment support
 - **Project Scanner** — Recursive repository auditing with `scopelock.json` policy support
 - **GitHub Actions CI** — Automated lint, test, and benchmark pipeline
@@ -38,10 +38,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 - JSX (`.jsx`)
 - Python (`.py`)
 
-#### Research
-- Accepted for GCET Major Project 2026
-- 100% Precision, 100% Recall, 100% F1-Score on 25-program benchmark
-- 0.66ms average analysis latency (180× faster than ESLint)
+#### Evaluation Notes
+- The included fixture scores classify whole programs and do not measure per-event coverage or estimate real-world accuracy.
+- The benchmark timer covers AST parsing only; no like-for-like comparison against other analyzers is maintained.
 
 ---
 

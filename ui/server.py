@@ -573,8 +573,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       </div>
     </div>
     <div class="stats-bar">
-      <div class="stat-pill">Accuracy: <span class="stat-val">100%</span></div>
-      <div class="stat-pill">AST Latency: <span class="stat-val">&lt;1ms</span></div>
+      <div class="stat-pill">Analysis: <span class="stat-val">Static AST</span></div>
+      <div class="stat-pill">Languages: <span class="stat-val">JS · TS · PY</span></div>
       <div class="stat-pill">PDF Reports: <span class="stat-val" style="color:var(--green)">Enabled</span></div>
     </div>
   </header>

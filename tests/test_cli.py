@@ -48,12 +48,18 @@ def test_cli_audit_code_passes_clean():
     assert "PASSED" in result.output
 
 
-def test_benchmark_suite_metrics():
-    """Run full benchmark and assert 100% precision & recall."""
+def test_benchmark_suite_metrics(capsys):
+    """Verify fixture counts and the program-level scope notice."""
     runner = BenchmarkRunner()
     metrics = runner.run_all()
+    output = capsys.readouterr().out
+
     assert metrics["accuracy"] == 100.0
     assert metrics["recall"] == 100.0
     assert metrics["precision"] == 100.0
+    assert metrics["positive_cases"] == 14
+    assert metrics["negative_cases"] == 11
     assert metrics["fp"] == 0
     assert metrics["fn"] == 0
+    assert "Program-level outcomes only" in output
+    assert "do not estimate real-world detection performance" in output

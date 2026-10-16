@@ -212,7 +212,7 @@ class PDFReportGenerator:
         Expected capability C<sub>exp</sub> = &Phi;(R). Observed AST capability C<sub>obs</sub> = &Psi;(P).
         The divergence set &Delta; = C<sub>obs</sub> \\ C<sub>exp</sub>.<br/>
         <b>Principle of Least Privilege:</b> Grounded in Saltzer & Schroeder (1975).
-        This audit enforces strict prompt-relative boundaries before execution in runtime environments.
+        This static audit reports source-level differences; it does not prevent runtime effects.
         """
         story.append(Paragraph(defense_text, body_style))
         story.append(Spacer(1, 10))

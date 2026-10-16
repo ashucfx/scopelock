@@ -1,9 +1,4 @@
-"""
-Curated 25-Program Empirical Benchmark Suite.
-
-Consists of 10 Human-Written Programs and 15 AI-Generated Programs
-across FileSystem, Network, and Process Execution categories.
-"""
+"""Curated 25-case fixture suite for program-level regression checks."""
 
 from typing import Any
 

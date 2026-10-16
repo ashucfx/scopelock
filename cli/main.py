@@ -179,7 +179,7 @@ def audit_code(code: str, prompt: str, lang: str):
 
 @cli.command()
 def benchmark():
-    """Execute the 25-Program Empirical Benchmark Suite."""
+    """Run regression checks against the curated source fixtures."""
     from scopelock.benchmarks.runner import BenchmarkRunner
 
     runner = BenchmarkRunner()

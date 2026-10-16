@@ -18,19 +18,15 @@ init(autoreset=True)
 
 
 class BenchmarkRunner:
-    """Automated empirical validation engine."""
+    """Compare audit outcomes with the curated program-level fixture labels."""
 
     def __init__(self):
         self.scanner = ScannerEngine()
 
     def run_all(self) -> dict[str, Any]:
-        """Run all 25 benchmark programs and compute scientific metrics."""
+        """Run the fixture suite and report program-level classification metrics."""
         print(Fore.CYAN + Style.BRIGHT + "\n" + "=" * 70)
-        print(
-            Fore.CYAN
-            + Style.BRIGHT
-            + " SCOPELOCK: 25-PROGRAM EMPIRICAL BENCHMARK EVALUATION ".center(70)
-        )
+        print(Fore.CYAN + Style.BRIGHT + " SCOPELOCK: FIXTURE-SUITE CHECK ".center(70))
         print(Fore.CYAN + Style.BRIGHT + "=" * 70 + "\n")
 
         tp = 0  # Violation present & flagged
@@ -38,6 +34,13 @@ class BenchmarkRunner:
         tn = 0  # Clean code passed
         fn = 0  # Violation present but missed
         total_latency_ms = 0.0
+        positive_cases = sum(case["expected_violations"] > 0 for case in BENCHMARK_DATASET)
+        negative_cases = len(BENCHMARK_DATASET) - positive_cases
+
+        print(
+            "Program-level outcomes only: a positive case passes when at least one "
+            "violation is detected; partial event coverage is not measured."
+        )
 
         print(
             f"{'ID':<6} {'Task Summary':<32} {'Expected':<10} {'Detected':<10} {'Latency':<10} {'Status'}"
@@ -79,32 +82,37 @@ class BenchmarkRunner:
             )
 
         total_tested = len(BENCHMARK_DATASET)
-        avg_latency = total_latency_ms / total_tested
-        accuracy = ((tp + tn) / total_tested) * 100
-        precision = (tp / (tp + fp) * 100) if (tp + fp) > 0 else 100.0
-        recall = (tp / (tp + fn) * 100) if (tp + fn) > 0 else 100.0
+        avg_latency = total_latency_ms / total_tested if total_tested else 0.0
+        accuracy = ((tp + tn) / total_tested * 100) if total_tested else 0.0
+        precision = (tp / (tp + fp) * 100) if (tp + fp) > 0 else 0.0
+        recall = (tp / (tp + fn) * 100) if (tp + fn) > 0 else 0.0
         f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
 
         print("-" * 75)
-        print(Fore.CYAN + Style.BRIGHT + "\n=== SCIENTIFIC EVALUATION METRICS ===")
+        print(Fore.CYAN + Style.BRIGHT + "\n=== FIXTURE-SUITE CLASSIFICATION ===")
         print(f"Total Programs Tested  : {total_tested}")
-        print(f"True Positives (TP)    : {tp} / 14 violations correctly caught")
-        print(f"True Negatives (TN)    : {tn} / 11 clean programs passed")
-        print(f"False Positives (FP)   : {fp} (Zero false alarms on valid code)")
-        print(f"False Negatives (FN)   : {fn} (Zero missed violations)")
-        print(Fore.GREEN + Style.BRIGHT + f"Overall Accuracy       : {accuracy:.2f}%")
-        print(Fore.GREEN + Style.BRIGHT + f"Precision              : {precision:.2f}%")
-        print(Fore.GREEN + Style.BRIGHT + f"Recall (Sensitivity)   : {recall:.2f}%")
-        print(Fore.GREEN + Style.BRIGHT + f"F1-Score               : {f1:.2f}%")
+        print(f"Positive fixtures      : {positive_cases}")
+        print(f"Negative fixtures      : {negative_cases}")
+        print(f"True Positives (TP)    : {tp}")
+        print(f"True Negatives (TN)    : {tn}")
+        print(f"False Positives (FP)   : {fp}")
+        print(f"False Negatives (FN)   : {fn}")
+        print(Fore.GREEN + Style.BRIGHT + f"Program Accuracy       : {accuracy:.2f}%")
+        print(Fore.GREEN + Style.BRIGHT + f"Program Precision      : {precision:.2f}%")
+        print(Fore.GREEN + Style.BRIGHT + f"Program Recall         : {recall:.2f}%")
+        print(Fore.GREEN + Style.BRIGHT + f"Program F1-Score        : {f1:.2f}%")
         print(
             Fore.YELLOW
             + Style.BRIGHT
-            + f"Average Latency        : {avg_latency:.2f} milliseconds per program"
+            + f"Average AST parse time : {avg_latency:.2f} ms per source"
         )
+        print("These fixture scores do not estimate real-world detection performance.")
         print("=" * 70 + "\n")
 
         return {
             "total_tested": total_tested,
+            "positive_cases": positive_cases,
+            "negative_cases": negative_cases,
             "tp": tp,
             "tn": tn,
             "fp": fp,

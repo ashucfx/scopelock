@@ -46,7 +46,7 @@ scopelock scan app.js --prompt "Build a local offline calculator"
 ║  File:      app.js                                                  ║
 ║  Intent:    Build a local offline calculator                        ║
 ║  Verdict:   ❌ FAILED — 1 unjustified capability detected           ║
-║  Latency:   0.66ms                                                  ║
+║  AST parse time: measured for this run                              ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║  [UNJUSTIFIED] NETWORK — fetch()                                    ║
 ║  Line 4, Col 2                                                      ║
