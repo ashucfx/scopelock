@@ -16,7 +16,7 @@ from scopelock import __version__
 from scopelock.core.aligner import CapabilityAligner
 from scopelock.core.intent_engine import IntentDecomposer
 from scopelock.core.pdf_generator import PDFReportGenerator
-from scopelock.core.project_scanner import ProjectScanner
+from scopelock.core.project_scanner import PolicyConfigError, ProjectScanner
 from scopelock.core.reporter import ReportFormatter
 from scopelock.core.schema import AuditVerdict
 from scopelock.scanner.engine import ScannerEngine
@@ -84,7 +84,11 @@ def scan_project(
     # can pipe the output directly into JSON/SARIF consumers.
     if not (as_json or as_sarif):
         click.echo(Fore.CYAN + Style.BRIGHT + f"\n[SCAN] ScopeLock scanning project directory: {directory} ...")
-    scanner = ProjectScanner(policy_file=policy_file)
+    try:
+        scanner = ProjectScanner(policy_file=policy_file)
+    except (OSError, PolicyConfigError) as exc:
+        click.echo(f"Invalid policy configuration: {exc}", err=True)
+        sys.exit(2)
     summary = scanner.scan_directory(directory)
 
     if as_json:

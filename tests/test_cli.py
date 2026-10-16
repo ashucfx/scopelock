@@ -110,3 +110,15 @@ def test_benchmark_suite_metrics():
     assert metrics["precision"] == 100.0
     assert metrics["fp"] == 0
     assert metrics["fn"] == 0
+
+
+def test_cli_scan_project_rejects_invalid_policy(tmp_path):
+    policy_file = tmp_path / "scopelock.json"
+    policy_file.write_text("{invalid", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        cli, ["scan-project", str(tmp_path), "--policy", str(policy_file), "--json"]
+    )
+
+    assert result.exit_code == 2
+    assert "Invalid policy configuration" in result.stderr
