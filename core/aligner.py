@@ -16,6 +16,7 @@ from scopelock.core.schema import (
     ScanDiagnostic,
     ScopePolicy,
 )
+from scopelock.core.taxonomy import CapabilityCategory
 
 
 class CapabilityAligner:
@@ -68,15 +69,24 @@ class CapabilityAligner:
             is_allowed = cls._is_authorized(policy, obs)
 
             if not is_allowed:
-                # Scope overruns are suspicious; unauthorized actions and denied
-                # categories are outright policy violations.
-                action_allowed = cls._is_action_authorized(policy, obs)
-                verdict = (
-                    RiskTier.SUSPICIOUS
-                    if category_allowed and action_allowed
-                    else RiskTier.UNJUSTIFIED
+                verdict = RiskTier.SUSPICIOUS if category_allowed else RiskTier.UNJUSTIFIED
+                high_risk_category = obs.category in {
+                    CapabilityCategory.PROCESS,
+                    CapabilityCategory.SECRET,
+                    CapabilityCategory.NETWORK,
+                }
+                if verdict == RiskTier.SUSPICIOUS:
+                    score = 0.65
+                elif high_risk_category:
+                    score = 0.95
+                else:
+                    score = 0.75
+
+                reason = (
+                    "the observed action or target is outside the declared capability scope"
+                    if category_allowed
+                    else "the capability category is not authorized by the stated intent"
                 )
-                score = 0.65 if verdict == RiskTier.SUSPICIOUS else 0.95
 
                 finding = DivergenceFinding(
                     observed=obs,
@@ -84,9 +94,9 @@ class CapabilityAligner:
                     risk_score=score,
                     finding=(
                         f"{'Suspicious' if category_allowed else 'Unjustified'} "
-                        f"{obs.category.value} capability detected. "
+                        f"{obs.category.value} capability detected: {reason}. "
                         f"The stated intent '{policy.stated_intent}' does not authorize "
-                        f"invoking '{obs.raw_call}'."
+                        f"invoking '{obs.raw_call}' with target '{obs.target_scope}'."
                     ),
                     recommendation=(
                         f"Remove or refactor '{obs.raw_call}' at Line {obs.source_location.line}, "

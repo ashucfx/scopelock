@@ -101,7 +101,8 @@ def test_alignment_enforces_action_and_target_scope():
     assert report.final_verdict == AuditVerdict.FAILED
     assert report.total_violations == 1
     assert report.findings[0].verdict == RiskTier.JUSTIFIED
-    assert report.findings[1].verdict == RiskTier.UNJUSTIFIED
+    assert report.findings[1].verdict == RiskTier.SUSPICIOUS
+    assert "outside the declared capability scope" in report.findings[1].finding
 
 
 def test_database_intent_authorizes_database_capabilities():
