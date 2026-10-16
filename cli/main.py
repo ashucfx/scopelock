@@ -78,16 +78,19 @@ def scan_project(
     Recursively audit an entire codebase directory.
     Automatically extracts in-code '// @intent: ...' comment headers.
     """
-    click.echo(Fore.CYAN + Style.BRIGHT + f"\n[SCAN] ScopeLock scanning project directory: {directory} ...")
+    # Machine-readable modes must emit exactly one document on stdout so callers
+    # can pipe the output directly into JSON/SARIF consumers.
+    if not (as_json or as_sarif):
+        click.echo(Fore.CYAN + Style.BRIGHT + f"\n[SCAN] ScopeLock scanning project directory: {directory} ...")
     scanner = ProjectScanner(policy_file=policy_file)
     summary = scanner.scan_directory(directory)
 
     if as_json:
         click.echo(ReportFormatter.to_project_json(summary))
-        sys.exit(1 if summary.verdict == AuditVerdict.FAILED else 0)
+        sys.exit(0 if summary.verdict == AuditVerdict.PASSED else 1)
     if as_sarif:
         click.echo(ReportFormatter.to_project_sarif(summary))
-        sys.exit(1 if summary.verdict == AuditVerdict.FAILED else 0)
+        sys.exit(0 if summary.verdict == AuditVerdict.PASSED else 1)
 
     click.echo("\n" + "=" * 70)
     click.echo(Fore.CYAN + Style.BRIGHT + " SCOPELOCK: PROJECT REPOSITORY AUDIT SUMMARY ".center(70))
