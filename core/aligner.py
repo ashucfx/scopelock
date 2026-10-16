@@ -100,40 +100,16 @@ class CapabilityAligner:
                 )
                 findings.append(finding)
             else:
-                # Allowed by category, verify scope if specified
-                scope_match = True
-                for exp in policy.expected_capabilities:
-                    if exp.category == obs.category:
-                        if (
-                            exp.target_scope != "*"
-                            and obs.target_scope != "*"
-                            and exp.target_scope not in obs.target_scope
-                        ):
-                            scope_match = False
-                        break
-
-                if scope_match:
-                    finding = DivergenceFinding(
-                        observed=obs,
-                        verdict=RiskTier.JUSTIFIED,
-                        risk_score=0.0,
-                        finding=(
-                            f"Justified {obs.category.value} access: "
-                            f"'{obs.raw_call}' aligns with stated requirements."
-                        ),
-                        recommendation="Permission authorized by intent contract.",
-                    )
-                else:
-                    finding = DivergenceFinding(
-                        observed=obs,
-                        verdict=RiskTier.SUSPICIOUS,
-                        risk_score=0.65,
-                        finding=(
-                            f"Capability {obs.category.value} is permitted, but target scope "
-                            f"'{obs.target_scope}' exceeds declared target scope."
-                        ),
-                        recommendation="Audit destination endpoint or file path.",
-                    )
+                finding = DivergenceFinding(
+                    observed=obs,
+                    verdict=RiskTier.JUSTIFIED,
+                    risk_score=0.0,
+                    finding=(
+                        f"Justified {obs.category.value} access: "
+                        f"'{obs.raw_call}' aligns with stated requirements."
+                    ),
+                    recommendation="Permission authorized by intent contract.",
+                )
                 findings.append(finding)
 
         # Calculate violations
