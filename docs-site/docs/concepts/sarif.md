@@ -8,9 +8,11 @@ ScopeLock produces **OASIS SARIF 2.1.0**-compatible output for seamless integrat
 # Single file
 scopelock scan app.js --prompt "Build a local calculator" --sarif > results.sarif
 
-# Project-wide (planned)
+# Project-wide
 scopelock scan-project ./src --sarif > project.sarif
 ```
+
+Project SARIF output is one SARIF 2.1.0 run containing findings from every scanned file. The run includes aggregate file counts and the overall verdict in its `properties` object. With `--sarif`, stdout contains only SARIF; the process returns `0` for a passed audit and `1` for a failed or review-needed audit.
 
 ## SARIF Structure
 
