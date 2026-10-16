@@ -29,14 +29,14 @@
   max-width: 1.75rem !important;
   display: block !important;
   object-fit: contain;
-  filter: drop-shadow(0 0 5px rgba(0, 245, 255, 0.6));
+  filter: drop-shadow(0 1px 3px rgba(8, 19, 33, 0.28));
   transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 .md-header__button.md-logo:hover svg,
 .md-header__button.md-logo:hover img {
   transform: scale(1.12);
-  filter: drop-shadow(0 0 10px rgba(0, 245, 255, 0.9));
+  filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.28));
 }
 
 .md-header__title {
