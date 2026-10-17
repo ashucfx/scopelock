@@ -87,6 +87,7 @@ nav:
     - Benchmark Suite: benchmarks/benchmarks.md
     - Comparison with SAST: benchmarks/comparison.md
   - Project:
+    - Roadmap: roadmap.md
     - Contributing: contributing.md
     - Changelog: changelog.md
 

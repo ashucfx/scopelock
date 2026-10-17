@@ -149,7 +149,16 @@ scopelock init-hooks
 
 ---
 
-## 6. License & Community
+## 6. Engineering Roadmap
+
+ScopeLock is actively evolving with planned milestones for incremental diff scanning (`scopelock scan-diff`), persistent SQLite audit history, remediation advice (`--explain`), GitHub Actions marketplace action, and polyglot Go/Java support.
+
+See [ROADMAP.md](ROADMAP.md) for detailed architectural specifications, delivery horizons, and contribution guidelines.
+
+---
+
+## 7. License & Community
 
 ScopeLock is open-source software licensed under the [Apache 2.0 License](LICENSE).
 Built for software engineering teams and AI developers requiring zero-trust execution assurance.
+
