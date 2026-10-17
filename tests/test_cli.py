@@ -1,11 +1,36 @@
 """Test suite for ScopeLock CLI and Benchmark Suite."""
 
 import json
+import subprocess
 
 from click.testing import CliRunner
 
 from scopelock.benchmarks.runner import BenchmarkRunner
 from scopelock.cli.main import cli
+
+
+def test_init_hooks_installs_staged_audit_in_git_repository(tmp_path, monkeypatch):
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(cli, ["init-hooks"])
+    hook = tmp_path / ".git" / "hooks" / "pre-commit"
+
+    assert result.exit_code == 0
+    assert "scopelock scan-staged" in hook.read_text(encoding="utf-8")
+    assert "scan-project ." not in hook.read_text(encoding="utf-8")
+
+
+def test_init_hooks_preserves_existing_hook(tmp_path, monkeypatch):
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    hook = tmp_path / ".git" / "hooks" / "pre-commit"
+    hook.write_text("#!/bin/sh\necho existing\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    result = CliRunner().invoke(cli, ["init-hooks"])
+
+    assert result.exit_code == 2
+    assert hook.read_text(encoding="utf-8") == "#!/bin/sh\necho existing\n"
 
 
 def test_cli_version():

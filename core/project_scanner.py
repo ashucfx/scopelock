@@ -7,6 +7,7 @@ extracting in-code intent headers (// @intent: ...), and enforcing scopelock.jso
 
 import json
 import re
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ClassVar
@@ -99,72 +100,149 @@ class ProjectScanner:
         directory_path: str,
         default_intent: str | None = None,
     ) -> ProjectAuditSummary:
-        """Recursively scan an entire codebase folder."""
+        """Recursively scan source files from a working tree."""
         root = Path(directory_path)
-        summary = ProjectAuditSummary()
+        if not root.exists() or not root.is_dir():
+            return ProjectAuditSummary(
+                scan_errors=[
+                    f"Directory does not exist or is not a directory: {directory_path}"
+                ],
+                verdict=AuditVerdict.NEEDS_REVIEW,
+            )
 
-        if not root.exists():
-            summary.scan_errors.append(f"Directory does not exist: {directory_path}")
-            summary.verdict = AuditVerdict.NEEDS_REVIEW
-            return summary
-
+        sources: dict[str, str] = {}
+        skipped_files: list[str] = []
+        scan_errors: list[str] = []
         for file_path in root.rglob("*"):
-            if file_path.is_file() and file_path.suffix in self.SUPPORTED_EXTENSIONS:
-                # Skip ignored directories
-                if any(ignored in file_path.parts for ignored in self.IGNORE_DIRS):
-                    continue
+            if not file_path.is_file() or file_path.suffix.lower() not in self.SUPPORTED_EXTENSIONS:
+                continue
+            relative_path = file_path.relative_to(root)
+            if any(ignored in relative_path.parts for ignored in self.IGNORE_DIRS):
+                continue
+            rel_path = str(relative_path).replace("\\", "/")
+            try:
+                with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                    sources[rel_path] = f.read()
+            except OSError as exc:
+                skipped_files.append(rel_path)
+                scan_errors.append(f"{rel_path}: {exc}")
+        return self.scan_sources(
+            sources,
+            default_intent=default_intent,
+            skipped_files=skipped_files,
+            scan_errors=scan_errors,
+        )
 
-                rel_path = str(file_path.relative_to(root)).replace("\\", "/")
-                try:
-                    with open(file_path, "r", encoding="utf-8", errors="replace") as f:
-                        code = f.read()
-                except OSError as exc:
-                    summary.skipped_files.append(rel_path)
-                    summary.scan_errors.append(f"{rel_path}: {exc}")
-                    continue
-                # 1. Determine intent: in-code header -> policy file -> default
-                # 1. Determine intent: in-code header -> policy file -> default
-                intent = self.extract_in_code_intent(code)
+    def scan_staged(self, repository_path: str = ".") -> ProjectAuditSummary:
+        """Audit supported source files exactly as staged in the Git index."""
+        try:
+            root = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                cwd=repository_path,
+                capture_output=True,
+                check=True,
+                text=True,
+            ).stdout.strip()
+            staged_paths = subprocess.run(
+                [
+                    "git",
+                    "diff",
+                    "--cached",
+                    "--no-renames",
+                    "--name-only",
+                    "--diff-filter=ACMRT",
+                    "-z",
+                ],
+                cwd=root,
+                capture_output=True,
+                check=True,
+            ).stdout.decode("utf-8", errors="replace").split("\0")
+        except (OSError, subprocess.CalledProcessError) as exc:
+            return ProjectAuditSummary(
+                scan_errors=[f"Unable to read staged Git files: {exc}"],
+                verdict=AuditVerdict.NEEDS_REVIEW,
+            )
 
-                if not intent and rel_path in self.policy_data.get("modules", {}):
-                    intent = self.policy_data["modules"][rel_path].get("intent")
-
-                if not intent:
-                    if default_intent:
-                        intent = default_intent
-                    else:
-                        # Infer intent from filename if no explicit annotation
-                        stem = file_path.stem.replace("_", " ").replace("-", " ")
-                        intent = f"Module for {stem}"
-
-                # 2. Run AST scan and alignment
-                caps, lat, diagnostics = self.scanner.scan_code_detailed(code, file_name=rel_path)
-                policy = IntentDecomposer.decompose(intent)
-                report = CapabilityAligner.align(
-                    policy=policy,
-                    observed_caps=caps,
-                    target_file=rel_path,
-                    latency_ms=lat,
-                    diagnostics=diagnostics,
+        sources: dict[str, str] = {}
+        skipped_files: list[str] = []
+        scan_errors: list[str] = []
+        for rel_path in filter(None, staged_paths):
+            path = Path(rel_path)
+            if path.suffix.lower() not in self.SUPPORTED_EXTENSIONS:
+                continue
+            if any(ignored in path.parts for ignored in self.IGNORE_DIRS):
+                continue
+            try:
+                result = subprocess.run(
+                    ["git", "show", f":{rel_path}"],
+                    cwd=root,
+                    capture_output=True,
+                    check=True,
                 )
+                sources[rel_path.replace("\\", "/")] = result.stdout.decode(
+                    "utf-8", errors="replace"
+                )
+            except (OSError, subprocess.CalledProcessError) as exc:
+                skipped_files.append(rel_path)
+                scan_errors.append(f"{rel_path}: unable to read staged content: {exc}")
+        return self.scan_sources(sources, skipped_files=skipped_files, scan_errors=scan_errors)
 
-                summary.scanned_files += 1
-                summary.total_latency_ms += lat
-                summary.file_reports.append(report)
+    def scan_sources(
+        self,
+        sources: dict[str, str],
+        default_intent: str | None = None,
+        skipped_files: list[str] | None = None,
+        scan_errors: list[str] | None = None,
+    ) -> ProjectAuditSummary:
+        """Audit a mapping of repository-relative paths to source contents."""
+        summary = ProjectAuditSummary(
+            skipped_files=skipped_files or [],
+            scan_errors=scan_errors or [],
+        )
+        for rel_path, code in sources.items():
+            path = Path(rel_path)
+            if path.suffix.lower() not in self.SUPPORTED_EXTENSIONS:
+                continue
+            if any(ignored in path.parts for ignored in self.IGNORE_DIRS):
+                continue
 
-                if report.final_verdict == AuditVerdict.FAILED:
-                    summary.violated_files += 1
-                    summary.total_violations += report.total_violations
-                elif report.final_verdict == AuditVerdict.NEEDS_REVIEW:
-                    summary.needs_review_files += 1
+            intent = self.extract_in_code_intent(code)
+            if not intent and rel_path in self.policy_data.get("modules", {}):
+                intent = self.policy_data["modules"][rel_path].get("intent")
+            if not intent:
+                if default_intent:
+                    intent = default_intent
                 else:
-                    summary.clean_files += 1
+                    stem = path.stem.replace("_", " ").replace("-", " ")
+                    intent = f"Module for {stem}"
+
+            caps, latency, diagnostics = self.scanner.scan_code_detailed(code, file_name=rel_path)
+            policy = IntentDecomposer.decompose(intent)
+            report = CapabilityAligner.align(
+                policy=policy,
+                observed_caps=caps,
+                target_file=rel_path,
+                latency_ms=latency,
+                diagnostics=diagnostics,
+            )
+            summary.scanned_files += 1
+            summary.total_latency_ms += latency
+            summary.file_reports.append(report)
+
+            if report.final_verdict == AuditVerdict.FAILED:
+                summary.violated_files += 1
+                summary.total_violations += report.total_violations
+            elif report.final_verdict == AuditVerdict.NEEDS_REVIEW:
+                summary.needs_review_files += 1
+            else:
+                summary.clean_files += 1
 
         if summary.violated_files > 0:
             summary.verdict = AuditVerdict.FAILED
-        elif summary.scan_errors or any(report.has_blocking_diagnostics() for report in summary.file_reports):
+        elif summary.scan_errors or any(
+            report.has_blocking_diagnostics() for report in summary.file_reports
+        ):
             summary.verdict = AuditVerdict.NEEDS_REVIEW
         else:
             summary.verdict = AuditVerdict.PASSED
-
         return summary

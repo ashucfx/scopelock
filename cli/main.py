@@ -6,6 +6,8 @@ auditing entire repositories recursively, managing Git pre-commit hooks,
 running empirical benchmarks, and serving the interactive security dashboard.
 """
 
+import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -146,32 +148,100 @@ def scan_project(
     sys.exit(0)
 
 
+@cli.command(name="scan-staged")
+@click.option("--policy", "policy_file", help="Path to scopelock.json configuration policy.")
+@click.option("--json", "as_json", is_flag=True, help="Output structured project JSON.")
+@click.option("--sarif", "as_sarif", is_flag=True, help="Output aggregate SARIF for CI/CD.")
+def scan_staged(policy_file: str | None, as_json: bool, as_sarif: bool):
+    """Audit supported source files as staged in the Git index."""
+    try:
+        scanner = ProjectScanner(policy_file=policy_file)
+    except (OSError, ValueError) as exc:
+        click.echo(f"Invalid policy configuration: {exc}", err=True)
+        sys.exit(2)
+    summary = scanner.scan_staged()
+    if as_json:
+        click.echo(ReportFormatter.to_project_json(summary))
+    elif as_sarif:
+        click.echo(ReportFormatter.to_project_sarif(summary))
+    else:
+        click.echo(f"Staged source files scanned: {summary.scanned_files}")
+        click.echo(f"Violations: {summary.total_violations}")
+        click.echo(f"Needs review: {summary.needs_review_files}")
+        for error in summary.scan_errors:
+            click.echo(f"[ERROR] {error}")
+        for report in summary.file_reports:
+            click.echo(f"[{report.final_verdict.value}] {report.target_file}")
+            for diagnostic in report.diagnostics:
+                click.echo(f"  [ERROR] {diagnostic.message}")
+
+    if summary.verdict != AuditVerdict.PASSED:
+        sys.exit(1)
+
+
 @cli.command(name="init-hooks")
 def init_hooks():
     """Install automated Git pre-commit hook in the current repository."""
-    git_dir = Path(".git")
-    if not git_dir.exists() or not git_dir.is_dir():
-        click.echo(Fore.RED + "Error: Current directory is not a Git repository root.")
+    try:
+        repo_root = Path(
+            subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        )
+        configured_hooks = subprocess.run(
+            ["git", "config", "--path", "--get", "core.hooksPath"],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if configured_hooks.returncode == 0:
+            hooks_dir = Path(configured_hooks.stdout.strip())
+            if not hooks_dir.is_absolute():
+                hooks_dir = repo_root / hooks_dir
+        else:
+            hooks_dir = Path(
+                subprocess.run(
+                    ["git", "rev-parse", "--path-format=absolute", "--git-path", "hooks"],
+                    cwd=repo_root,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout.strip()
+            )
+    except (OSError, subprocess.CalledProcessError):
+        click.echo(Fore.RED + "Error: Current directory is not inside a Git repository.")
         sys.exit(1)
 
-    hooks_dir = git_dir / "hooks"
     hooks_dir.mkdir(exist_ok=True)
     pre_commit_script = hooks_dir / "pre-commit"
 
+    if pre_commit_script.exists():
+        existing_content = pre_commit_script.read_text(encoding="utf-8", errors="replace")
+        if "scopelock scan-staged" in existing_content:
+            click.echo(Fore.GREEN + "ScopeLock staged audit hook is already installed.")
+            return
+        click.echo(
+            Fore.RED
+            + "An existing pre-commit hook was found and left unchanged. Add `scopelock scan-staged` to it manually."
+        )
+        sys.exit(2)
+
     hook_content = """#!/bin/sh
 # ScopeLock automated pre-commit security check
-echo "[ScopeLock] Running Zero-Trust Capability Audit..."
-scopelock scan-project .
-if [ $? -ne 0 ]; then
-    echo "[ScopeLock] Commit rejected: Unjustified capabilities detected in staged files."
-    exit 1
-fi
+echo "[ScopeLock] Auditing staged source files..."
+scopelock scan-staged
 """
     with open(pre_commit_script, "w", encoding="utf-8") as f:
         f.write(hook_content)
+    if os.name != "nt":
+        pre_commit_script.chmod(0o755)
 
-    click.echo(Fore.GREEN + Style.BRIGHT + "[OK] ScopeLock Git pre-commit hook installed successfully in .git/hooks/pre-commit!")
-    click.echo("Every 'git commit' will now automatically verify code against least privilege before committing.")
+    click.echo(Fore.GREEN + Style.BRIGHT + f"[OK] ScopeLock hook installed at {pre_commit_script}.")
+    click.echo("Each commit checks only supported source files in the Git index.")
 
 
 @cli.command(name="audit-code")

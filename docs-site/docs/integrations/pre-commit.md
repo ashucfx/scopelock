@@ -11,7 +11,7 @@ Run a ScopeLock project scan before a local commit is created.
 scopelock init-hooks
 ```
 
-This installs a shell script at `.git/hooks/pre-commit` that runs `scopelock scan-project .` before every commit.
+This installs a shell script in Git's configured hooks directory that runs `scopelock scan-staged` before every commit. It reads supported source contents from the Git index, leaving unstaged edits out of the scan. If a pre-commit hook already exists, it is preserved; add `scopelock scan-staged` to it manually.
 
 See the [`init-hooks` command reference](../cli/init-hooks.md) for details.
 
@@ -37,8 +37,7 @@ repos:
     hooks:
       - id: scopelock
         name: ScopeLock — Zero-Trust Capability Audit
-        entry: scopelock scan-project
-        args: ["."]
+        entry: scopelock scan-staged
         language: python
         additional_dependencies: [scopelock]
         pass_filenames: false

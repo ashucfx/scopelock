@@ -9,18 +9,16 @@ scopelock init-hooks
 ```
 
 !!! note "Requirements"
-    This command must be run from the **root of a Git repository** (directory containing `.git/`).
+    This command must be run from within a Git repository.
 
 ## What It Does
 
-Creates a `pre-commit` hook script at `.git/hooks/pre-commit` that:
+Creates a `pre-commit` hook script in Git's configured hooks directory that:
 
-1. Runs `scopelock scan-project .` before every commit
-2. Blocks the commit if any unjustified capabilities are detected
-3. Prints the files and lines reported by the scan
-
-!!! note "Project-wide scan"
-    The hook scans supported files present in the working tree, not only staged paths. Unstaged or untracked source files may affect the result. The native hook is a POSIX shell script and is intended for Linux, macOS or WSL; on Windows PowerShell, use the [pre-commit framework](../integrations/pre-commit.md) instead.
+1. Runs `scopelock scan-staged` before every commit
+2. Reads supported source files and contents from the Git index, not the working tree
+3. Returns non-zero for violations, parser diagnostics, or incomplete scans
+4. Leaves an existing pre-commit hook unchanged; add `scopelock scan-staged` to that hook manually
 
 ## Usage
 
@@ -30,8 +28,8 @@ scopelock init-hooks
 ```
 
 ```
-[OK] ScopeLock Git pre-commit hook installed in .git/hooks/pre-commit!
-Every 'git commit' will now automatically verify code against least privilege.
+[OK] ScopeLock Git pre-commit hook installed.
+Each commit checks supported source files in the Git index.
 ```
 
 If the project scan finds a blocking result, the commit is rejected. For example:
@@ -40,8 +38,8 @@ If the project scan finds a blocking result, the commit is rejected. For example
 git add app.js
 git commit -m "Add calculator"
 
-# Example output:
-[ScopeLock] Running Zero-Trust Capability Audit...
+# Output:
+[ScopeLock] Auditing staged source files...
 [FAIL] app.js — NETWORK.fetch detected (unjustified)
 [ScopeLock] Commit rejected: Unjustified capabilities detected.
 ```
@@ -80,8 +78,7 @@ repos:
     hooks:
       - id: scopelock
         name: ScopeLock Capability Audit
-        entry: scopelock scan-project
-        args: ["."]
+        entry: scopelock scan-staged
         language: python
         pass_filenames: false
         always_run: true

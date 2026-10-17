@@ -21,9 +21,10 @@ pip install scopelock
 |---|---|
 | [`scan`](scan.md) | Scan a single source file against a developer intent prompt |
 | [`scan-project`](scan-project.md) | Recursively audit an entire codebase directory |
+| `scan-staged` | Audit supported source files from the Git index |
 | [`audit-code`](audit-code.md) | Directly audit a raw code snippet (no file needed) |
 | [`serve`](serve.md) | Launch the interactive web dashboard |
-| [`benchmark`](benchmark.md) | Run the 25-program empirical benchmark suite |
+| [`benchmark`](benchmark.md) | Run the curated source fixture checks |
 | [`init-hooks`](init-hooks.md) | Install Git pre-commit security hook |
 
 ---
@@ -46,6 +47,9 @@ scopelock audit-code --code "fetch('https://evil.com')" --prompt "Local math CLI
 # Recursively audit a project
 scopelock scan-project ./src
 
+# Audit staged source contents before a commit
+scopelock scan-staged
+
 # Launch web dashboard
 scopelock serve --port 8000
 
@@ -65,7 +69,8 @@ ScopeLock follows standard Unix exit code conventions for CI/CD integration:
 | Exit Code | Meaning |
 |---|---|
 | `0` | Audit PASSED — all capabilities are justified |
-| `1` | Audit FAILED — unjustified capabilities detected |
+| `1` | Audit FAILED or NEEDS REVIEW — violations or incomplete analysis |
+| `2` | Invalid project policy or command configuration |
 
 This means any CI/CD pipeline that checks exit codes will automatically block deployment when over-reach is detected.
 
