@@ -17,6 +17,10 @@ from scopelock.core.schema import AuditReport, AuditVerdict
 from scopelock.scanner.engine import ScannerEngine
 
 
+class PolicyConfigError(ValueError):
+    """Raised when a project policy file is unreadable or invalid."""
+
+
 @dataclass
 class ProjectAuditSummary:
     """Aggregated audit results across an entire codebase."""
@@ -55,15 +59,30 @@ class ProjectScanner:
         self.policy_data = self._load_policy(policy_file) if policy_file else {}
 
     def _load_policy(self, path_str: str) -> dict:
-        """Load optional scopelock.json project configuration."""
+        """Load and validate scopelock.json project configuration."""
         path = Path(path_str)
-        if path.exists():
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except (OSError, json.JSONDecodeError):
-                return {}
-        return {}
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                policy = json.load(f)
+        except json.JSONDecodeError as exc:
+            raise PolicyConfigError(f"Invalid JSON in policy file '{path}': {exc}") from exc
+        except OSError as exc:
+            raise OSError(f"Cannot read policy file '{path}': {exc}") from exc
+
+        if not isinstance(policy, dict):
+            raise PolicyConfigError("Policy file must contain a JSON object.")
+        modules = policy.get("modules", {})
+        if not isinstance(modules, dict):
+            raise PolicyConfigError("Policy field 'modules' must contain an object.")
+        for module_path, module_policy in modules.items():
+            if not isinstance(module_path, str) or not isinstance(module_policy, dict):
+                raise PolicyConfigError("Each policy module must map a path to an object.")
+            intent = module_policy.get("intent")
+            if not isinstance(intent, str) or not intent.strip():
+                raise PolicyConfigError(
+                    f"Policy module '{module_path}' must define a non-empty string 'intent'."
+                )
+        return policy
 
     def extract_in_code_intent(self, content: str) -> str | None:
         """Extract declared @intent header comment from source code."""
@@ -78,7 +97,7 @@ class ProjectScanner:
     def scan_directory(
         self,
         directory_path: str,
-        default_intent: str = "General application module"
+        default_intent: str | None = None,
     ) -> ProjectAuditSummary:
         """Recursively scan an entire codebase folder."""
         root = Path(directory_path)
@@ -111,9 +130,12 @@ class ProjectScanner:
                     intent = self.policy_data["modules"][rel_path].get("intent")
 
                 if not intent:
-                    # Infer intent from filename if no explicit annotation
-                    stem = file_path.stem.replace("_", " ").replace("-", " ")
-                    intent = f"Module for {stem}"
+                    if default_intent:
+                        intent = default_intent
+                    else:
+                        # Infer intent from filename if no explicit annotation
+                        stem = file_path.stem.replace("_", " ").replace("-", " ")
+                        intent = f"Module for {stem}"
 
                 # 2. Run AST scan and alignment
                 caps, lat, diagnostics = self.scanner.scan_code_detailed(code, file_name=rel_path)
