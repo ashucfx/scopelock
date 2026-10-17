@@ -4,9 +4,11 @@
 
 | Requirement | Version |
 |---|---|
-| Python | ≥ 3.10 |
+| Python | 3.10–3.13 |
 | Operating System | Windows, macOS, Linux |
 | Git | Any (for pre-commit hooks) |
+
+Python 3.14 and newer are not currently declared as supported by the package. Use a supported Python interpreter when creating a virtual environment.
 
 ---
 
@@ -15,6 +17,17 @@
 ```bash
 pip install scopelock
 ```
+
+On Windows, if you do not want to activate a virtual environment, use its interpreter directly:
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install scopelock
+.\.venv\Scripts\scopelock.exe --version
+```
+
+Replace `3.13` with another installed supported version (`3.10`, `3.11` or `3.12`). If `py -3.13` reports that no runtime is installed, install that Python version first or use `py --list` to see available versions.
 
 Verify the installation:
 
@@ -51,16 +64,22 @@ pipx install scopelock
 
 ---
 
-## Optional: LLM-Enhanced Intent Analysis
+## Optional: Remote intent decomposition
 
-ScopeLock works **100% offline** by default. To enable GPT-4o-mini enhanced intent decomposition:
+ScopeLock uses local keyword rules by default and does not require an API key. To use the optional OpenAI intent decomposer, install the client package and set a key.
 
 ```bash
 pip install openai
 export OPENAI_API_KEY="sk-..."
 ```
 
-When `OPENAI_API_KEY` is set, ScopeLock uses the LLM for richer intent parsing and automatically falls back to offline mode if the API is unavailable.
+In PowerShell, set the key for the current terminal session with:
+
+```powershell
+$env:OPENAI_API_KEY = "your-key"
+```
+
+When enabled, ScopeLock sends the requirement text to the OpenAI API for policy decomposition. Source files are scanned locally and are not sent in that request. If the optional client or API call is unavailable, ScopeLock falls back to its local heuristic engine. See [Data handling](../concepts/security-model.md#data-handling) before enabling the integration.
 
 ---
 

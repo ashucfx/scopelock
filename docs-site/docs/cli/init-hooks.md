@@ -1,6 +1,6 @@
 # `scopelock init-hooks`
 
-Install an **automated Git pre-commit security hook** that runs ScopeLock before every `git commit`, preventing capability over-reach from being committed to the repository.
+Install a Git pre-commit hook that runs a project-wide ScopeLock scan before every `git commit`.
 
 ## Synopsis
 
@@ -17,7 +17,10 @@ Creates a `pre-commit` hook script at `.git/hooks/pre-commit` that:
 
 1. Runs `scopelock scan-project .` before every commit
 2. Blocks the commit if any unjustified capabilities are detected
-3. Shows exactly which files and lines caused the violation
+3. Prints the files and lines reported by the scan
+
+!!! note "Project-wide scan"
+    The hook scans supported files present in the working tree, not only staged paths. Unstaged or untracked source files may affect the result. The native hook is a POSIX shell script and is intended for Linux, macOS or WSL; on Windows PowerShell, use the [pre-commit framework](../integrations/pre-commit.md) instead.
 
 ## Usage
 
@@ -31,13 +34,13 @@ scopelock init-hooks
 Every 'git commit' will now automatically verify code against least privilege.
 ```
 
-Now try to commit a file with a violation:
+If the project scan finds a blocking result, the commit is rejected. For example:
 
 ```bash
 git add app.js
 git commit -m "Add calculator"
 
-# Output:
+# Example output:
 [ScopeLock] Running Zero-Trust Capability Audit...
 [FAIL] app.js — NETWORK.fetch detected (unjustified)
 [ScopeLock] Commit rejected: Unjustified capabilities detected.
@@ -58,6 +61,12 @@ git commit --no-verify -m "Emergency fix"
 
 ```bash
 rm .git/hooks/pre-commit
+```
+
+In PowerShell:
+
+```powershell
+Remove-Item .git/hooks/pre-commit
 ```
 
 ## Alternative: pre-commit Framework

@@ -1,6 +1,6 @@
 # `scopelock scan-project`
 
-Recursively audit an **entire codebase directory**. Automatically extracts `// @intent:` comment annotations from source files.
+Recursively audit supported source files beneath a project directory. ScopeLock reads source files locally, extracts intent comments when present, and reports recognized capability calls against the selected policy.
 
 ## Synopsis
 
@@ -23,7 +23,7 @@ scopelock scan-project [DIRECTORY] [OPTIONS]
 | `--json` | Emit the complete aggregate project report as JSON |
 | `--sarif` | Emit all project findings as SARIF 2.1.0 |
 
-When either machine-readable option is selected, stdout contains only the JSON or SARIF document. The command exits with status `0` only when the audit passes; failed or review-needed audits exit with status `1` so CI jobs can fail closed.
+When either machine-readable option is selected, stdout contains only the JSON or SARIF document. The command exits with status `0` only when the audit passes; failed, review-needed or incomplete scans exit with status `1` so CI jobs can fail closed.
 
 ## Supported File Types
 
@@ -37,7 +37,7 @@ ScopeLock scans files with these extensions:
 | `.tsx` | React TypeScript |
 | `.py` | Python |
 
-## Auto-Ignored Directories
+## Excluded directories
 
 The following directories are automatically excluded:
 
@@ -73,7 +73,7 @@ scopelock scan-project ./src --pdf audit-report.pdf
 
 ## In-Code Intent Annotations
 
-ScopeLock automatically extracts intent from source file headers — no `--prompt` flag needed:
+ScopeLock checks the first 25 lines of each source file for an `@intent:` comment. The annotation can be a `//`, `/* ... */`, `#` or triple-quoted comment:
 
 === "JavaScript / TypeScript"
 
@@ -94,7 +94,13 @@ ScopeLock automatically extracts intent from source file headers — no `--promp
         # ...
     ```
 
-If no `@intent:` is found, ScopeLock infers intent from the filename (e.g., `user_auth.js` → `"Module for user auth"`).
+For each file, the selected intent follows this precedence:
+
+1. An `@intent:` comment in the source header.
+2. The `intent` value for that relative path in `scopelock.json`.
+3. A filename-based fallback, such as `user_auth.js` → `"Module for user auth"`.
+
+Use an explicit annotation or policy entry when a filename does not accurately describe the module. The heuristic intent parser uses keywords, so vague descriptions can produce a policy that needs review.
 
 ## Sample Output
 

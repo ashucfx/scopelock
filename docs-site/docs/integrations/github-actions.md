@@ -1,6 +1,9 @@
 # GitHub Actions Integration
 
-Integrate ScopeLock into your GitHub CI/CD pipeline to automatically block pull requests that introduce unjustified capability over-reach.
+Run ScopeLock from GitHub Actions to check changes for recognized capability use that falls outside the declared intent.
+
+!!! note "A failed workflow does not automatically block merging"
+    The example exits with a non-zero status when a scan fails. To require that result before merging, configure branch protection or a repository ruleset and mark the ScopeLock check as required. Without that repository setting, GitHub can still allow a pull request to merge.
 
 ## Quick Setup
 
@@ -35,14 +38,14 @@ jobs:
 
       - name: Run Capability Audit
         run: scopelock scan-project ./src
-        # Exit code 1 automatically fails the job → blocks the PR
+        # Exit code 1 fails the job. Make this check required in branch rules to block merging.
 ```
 
 ---
 
 ## Full Enterprise Setup (with SARIF)
 
-This workflow audits your code **and** uploads results to GitHub's Security tab:
+This workflow audits your code **and** uploads results to GitHub's Security tab. The repository needs the `security-events: write` permission for the upload step.
 
 ```yaml title=".github/workflows/scopelock-enterprise.yml"
 name: ScopeLock Enterprise Audit
@@ -77,9 +80,7 @@ jobs:
       - name: Generate SARIF Report
         if: always()   # Run even if previous step failed
         run: |
-          scopelock scan app.js \
-            --prompt "$(cat .scopelock-intent.txt)" \
-            --sarif > scopelock.sarif
+          scopelock scan-project ./src --sarif > scopelock.sarif
 
       - name: Upload to GitHub Security Tab
         if: always()
@@ -118,15 +119,15 @@ For large repositories, scan only files changed in the PR:
 
 ---
 
-## LLM-Enhanced Mode (with OpenAI)
+## Optional OpenAI intent decomposition
 
-Enable richer intent decomposition using GPT-4o-mini:
+The default intent engine is local. To use the optional OpenAI integration, install the client and configure a repository secret:
 
 ```yaml
-      - name: Install ScopeLock with LLM support
+      - name: Install ScopeLock with OpenAI support
         run: pip install scopelock openai
 
-      - name: Run Audit (LLM-enhanced)
+      - name: Run Audit with remote intent decomposition
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: scopelock scan-project ./src
@@ -134,6 +135,8 @@ Enable richer intent decomposition using GPT-4o-mini:
 
 Add `OPENAI_API_KEY` to your repository secrets under  
 **Settings → Secrets and variables → Actions → New repository secret**
+
+When this integration is enabled, ScopeLock sends intent text to the OpenAI API for policy decomposition. It scans source files in the runner and does not include file contents in that request. See [Data handling](../concepts/security-model.md#data-handling).
 
 ---
 

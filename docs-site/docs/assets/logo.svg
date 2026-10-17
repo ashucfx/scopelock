@@ -1,22 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
-  <title id="title">ScopeLock shield mark</title>
-  <defs>
-    <linearGradient id="shield-edge" x1="86" y1="58" x2="405" y2="458" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#22d3ee"/>
-      <stop offset="0.55" stop-color="#0ea5e9"/>
-      <stop offset="1" stop-color="#3b82f6"/>
-    </linearGradient>
-    <linearGradient id="shield-fill" x1="256" y1="48" x2="256" y2="470" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#12243a"/>
-      <stop offset="1" stop-color="#081321"/>
-    </linearGradient>
-  </defs>
-  <path d="M256 30C323 64 384 91 442 108V243C442 354 372 431 256 484C140 431 70 354 70 243V108C128 91 189 64 256 30Z"
-        fill="url(#shield-edge)"/>
-  <path d="M256 53C316 83 372 106 419 121V243C419 339 356 409 256 462C156 409 93 339 93 243V121C140 106 196 83 256 53Z"
-        fill="url(#shield-fill)"/>
-  <path d="M337 177H225C192 177 170 197 170 226C170 253 189 268 226 278L286 293C322 302 343 320 343 350C343 381 320 402 285 402H176"
-        fill="none" stroke="#e8f7ff" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="337" cy="177" r="10" fill="#22d3ee"/>
-  <circle cx="176" cy="402" r="10" fill="#22d3ee"/>
+  <title id="title">ScopeLock scope mark</title>
+  <rect x="28" y="28" width="456" height="456" rx="112" fill="#0b1f35"/>
+  <rect x="29.5" y="29.5" width="453" height="453" rx="110.5" fill="none" stroke="#31516c" stroke-width="3"/>
+  <path d="M354 174H228c-35 0-58 19-58 49 0 26 18 42 54 52l70 19c35 10 53 25 53 52 0 30-23 49-59 49H158"
+        fill="none" stroke="#f4f9ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="29"/>
+  <circle cx="354" cy="174" r="10" fill="#66d2f4"/>
+  <circle cx="158" cy="395" r="10" fill="#66d2f4"/>
 </svg>

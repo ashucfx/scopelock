@@ -1,6 +1,9 @@
 # Pre-commit Hooks
 
-Prevent unjustified capability over-reach from ever being committed to your repository.
+Run a ScopeLock project scan before a local commit is created.
+
+!!! note "The hook scans the working tree"
+    Both examples below run `scopelock scan-project .` over the repository files on disk; they do not limit the scan to staged paths. Fix, annotate or exclude any unrelated finding before committing, or run the check manually while preparing the change.
 
 ## Option 1: ScopeLock Native Hook
 
@@ -49,7 +52,7 @@ Install the hooks:
 pre-commit install
 ```
 
-Now every `git commit` runs ScopeLock automatically.
+Now every `git commit` runs a project-wide ScopeLock scan automatically.
 
 ### Test manually
 
@@ -88,7 +91,7 @@ The commit is **blocked**. Fix the violation, then try again.
 | Linux | ✅ | ✅ |
 | macOS | ✅ | ✅ |
 | Windows (WSL) | ✅ | ✅ |
-| Windows (PowerShell) | ⚠️ Partial | ✅ Recommended |
+| Windows (PowerShell) | ⚠️ Native hook uses a POSIX shell script | ✅ |
 
 !!! tip "Windows users"
     Use the **pre-commit framework** approach on Windows for the most reliable experience.

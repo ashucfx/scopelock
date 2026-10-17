@@ -42,3 +42,6 @@ build/
 # MkDocs build output
 docs-site/site/
 site/
+
+research/
+tmp/

@@ -47,6 +47,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 
 ## [Upcoming]
 
+See the comprehensive [Engineering Roadmap](roadmap.md) for architectural designs, component specifications, and delivery horizons.
+
 ### Planned for v1.1.0
 - [ ] Documentation website (GitHub Pages)
 - [ ] PyPI publication
