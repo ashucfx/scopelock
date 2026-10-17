@@ -1,6 +1,7 @@
 site_name: ScopeLock
-site_description: "Zero-Trust Security & Capability-Divergence Gate for AI-Generated Software"
-site_url: https://ashucfx.github.io/scopelock
+site_description: "Install, use, and integrate ScopeLock's static capability auditor."
+site_url: https://ashucfx.github.io/scopelock/
+site_author: ScopeLock Contributors
 repo_url: https://github.com/ashucfx/scopelock
 repo_name: ashucfx/scopelock
 edit_uri: edit/main/docs-site/docs/
@@ -19,21 +20,23 @@ theme:
     text: Inter
     code: JetBrains Mono
   palette:
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: cyan
-      accent: teal
+    - scheme: default
+      primary: custom
+      accent: custom
+      media: "(prefers-color-scheme: light)"
       toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: cyan
-      accent: teal
-      toggle:
-        icon: material/brightness-7
+        icon: material/weather-night
         name: Switch to dark mode
+    - scheme: slate
+      primary: custom
+      accent: custom
+      media: "(prefers-color-scheme: dark)"
+      toggle:
+        icon: material/white-balance-sunny
+        name: Switch to light mode
   features:
+    - navigation.instant
+    - navigation.instant.progress
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
@@ -44,14 +47,16 @@ theme:
     - search.highlight
     - search.share
     - content.code.copy
+    - content.code.select
     - content.code.annotate
     - content.tabs.link
     - announce.dismiss
     - toc.integrate
+    - toc.follow
 
 nav:
-  - Home: index.md
-  - Getting Started:
+  - Start here:
+    - Home: index.md
     - Installation: getting-started/installation.md
     - Quickstart: getting-started/quickstart.md
     - Your First Audit: getting-started/first-audit.md
@@ -63,11 +68,12 @@ nav:
     - serve: cli/serve.md
     - benchmark: cli/benchmark.md
     - init-hooks: cli/init-hooks.md
-  - Concepts:
+  - Concepts & Security:
     - The Intent Gap: concepts/intent-gap.md
     - Intent Engine: concepts/intent-engine.md
     - Capability Taxonomy: concepts/taxonomy.md
     - Divergence Scoring: concepts/divergence.md
+    - Security Model & Limits: concepts/security-model.md
     - SARIF Output: concepts/sarif.md
   - Integrations:
     - GitHub Actions: integrations/github-actions.md
@@ -77,11 +83,12 @@ nav:
   - API Reference:
     - REST API: api/rest-api.md
     - Python SDK: api/python-sdk.md
-  - Benchmarks & Evaluation:
+  - Benchmarks:
     - Benchmark Suite: benchmarks/benchmarks.md
     - Comparison with SAST: benchmarks/comparison.md
-  - Contributing: contributing.md
-  - Changelog: changelog.md
+  - Project:
+    - Contributing: contributing.md
+    - Changelog: changelog.md
 
 plugins:
   - search:
@@ -125,11 +132,6 @@ extra:
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/scopelock/
       name: ScopeLock on PyPI
-  version:
-    provider: mike
-  analytics:
-    provider: google
-    property: G-XXXXXXXXXX
 
 extra_css:
   - assets/extra.css

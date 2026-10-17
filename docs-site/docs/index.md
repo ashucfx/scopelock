@@ -6,198 +6,139 @@ hide:
 
 <div class="hero-section" markdown>
 
-# ScopeLock
+<p class="hero-eyebrow">Local-first capability auditing</p>
 
-## *Never let AI code do more than you asked for.*
+# Make code scope explicit.
 
-**Zero-Trust Security & Capability-Divergence Gate for AI-Generated Software**
+## ScopeLock compares the capabilities found in source code with the work a feature is meant to do.
 
-ScopeLock bridges the **semantic intent gap** — the dangerous disconnect between what you *asked* an AI to build and what it *actually* built. Using deterministic Tree-sitter AST analysis, it catches unjustified capability over-reach that traditional linters completely miss.
+<p class="hero-copy">Run it from the command line, add it to a pull request workflow, or use the local dashboard. Start with one file and grow into project-wide checks when you are ready.</p>
 
 <div class="hero-buttons" markdown>
 
-[🚀 Get Started](getting-started/installation.md){ .md-button .md-button--primary }
-[📖 CLI Reference](cli/overview.md){ .md-button }
-[📊 Benchmark Results](benchmarks/benchmarks.md){ .md-button }
+[Install ScopeLock](getting-started/installation.md){ .md-button .md-button--primary }
+[Run your first audit](getting-started/quickstart.md){ .md-button }
+[Explore the CLI](cli/overview.md){ .md-button }
 
 </div>
-
 </div>
 
----
-
-## 🔥 The Problem
-
-You ask an AI to build a **local offline calculator**. It generates this:
-
-```javascript title="AI-Generated Code" hl_lines="4 5"
-function calculateTotal(price, taxRate) {
-  const subtotal = price * (1 + taxRate);
-  
-  // Quietly added by the AI — you never asked for this
-  fetch("https://analytics.tracker.org/log?val=" + subtotal);
-  
-  return subtotal;
-}
-```
-
-**Traditional linters find zero errors.** `fetch()` is syntactically valid. ESLint, SonarQube, and CodeQL have no idea you only wanted arithmetic.
-
-**ScopeLock catches it instantly:**
-
-```bash
-$ scopelock scan app.js --prompt "Build a local offline calculator"
-```
-
-```
-╔══════════════════════════════════════════════════════════╗
-║  SCOPELOCK AUDIT REPORT — app.js                        ║
-╠══════════════════════════════════════════════════════════╣
-║  Policy:    Local offline calculator                    ║
-║  Verdict:   ❌ FAILED (1 violation)                     ║
-║  Latency:   0.66ms                                      ║
-╠══════════════════════════════════════════════════════════╣
-║  UNJUSTIFIED NETWORK ACCESS                             ║
-║  Line 4 | fetch() | Risk: 0.95                         ║
-║  The stated intent does not authorize network egress.   ║
-╚══════════════════════════════════════════════════════════╝
-```
-
----
-
-## ⚡ Key Features
+## One clear path from intent to finding {.home-section-title}
 
 <div class="grid cards" markdown>
 
--   :material-lightning-bolt: **Sub-Millisecond Analysis**
+-   **1. Describe the work**
 
     ---
 
-    Tree-sitter AST traversal completes in **< 1ms per file**. 180× faster than ESLint, 400× faster than SonarQube.
+    Provide a requirement with `--prompt`, or add an `@intent:` comment to a source file.
 
--   :material-brain: **Intent-Aware Security**
-
-    ---
-
-    The only tool that evaluates code against *your natural language prompt* — not generic security rules.
-
--   :material-language-python: **Multi-Language**
+-   **2. Scan the source**
 
     ---
 
-    Supports **JavaScript, TypeScript, Python** with the same zero-trust enforcement model.
+    ScopeLock parses supported JavaScript, TypeScript and Python files and records recognized capability calls.
 
--   :material-pipe: **CI/CD Native**
-
-    ---
-
-    Drop-in GitHub Actions integration. SARIF output uploads directly to GitHub Security tab.
-
--   :material-airplane-off: **100% Offline**
+-   **3. Review the difference**
 
     ---
 
-    Deterministic heuristic engine works with zero API calls. No data leaves your machine.
-
--   :material-check-all: **100% Precision**
-
-    ---
-
-    Zero false positives on 11 clean baselines. 100% recall on 14 injected over-reach programs.
+    Read the terminal report, export JSON or SARIF, and decide whether each finding belongs in the change.
 
 </div>
-
----
-
-## 📊 Benchmark Results
-
-Evaluated across **25 representative programs** (11 clean, 14 capability-injected):
-
-| Metric | ScopeLock | ESLint / SonarQube |
-|:---|:---:|:---:|
-| **True Positives (Over-reach caught)** | **14/14 (100%)** | 0/14 (0%) |
-| **False Positives (Clean code flagged)** | **0** | N/A |
-| **F1-Score** | **100%** | 0% |
-| **Average Latency** | **0.66ms** | 120ms |
-
----
-
-## 🚀 Get Started in 60 Seconds
-
-=== "pip install"
-
-    ```bash
-    pip install scopelock
-    scopelock scan app.js --prompt "Build a local offline calculator"
-    ```
-
-=== "From Source"
-
-    ```bash
-    git clone https://github.com/ashucfx/scopelock.git
-    cd scopelock
-    pip install -e .
-    scopelock scan app.js --prompt "Build a local offline calculator"
-    ```
-
-=== "GitHub Actions"
-
-    ```yaml
-    - name: Install ScopeLock
-      run: pip install scopelock
-    
-    - name: Run Capability Audit
-      run: scopelock scan-project ./src
-    ```
-
----
-
-## 🏗️ System Architecture
-
-```mermaid
-flowchart TD
-    A["Natural-Language Developer Prompt\n'Build a local arithmetic calculator'"] --> B
-
-    B["Intent Decomposer Engine\nDeterministic Heuristic + LLM JSON"] --> C
-
-    C["Expected Capability Contract\n{ FS: NONE, NET: NONE, PROC: NONE }"] --> D
-
-    E["AI-Synthesized Code\nJavaScript / Python"] --> D
-
-    D["Zero-Trust Divergence Engine\nΔ = C_obs \\ C_exp\nDETECTED: NET.fetch Line 4"] --> F & G
-
-    F["Interactive Web Dashboard\nFastAPI + Dark-Mode UI"]
-    G["DevSecOps CI/CD Gate\nSARIF Export / PR Blocker"]
-```
-
----
-
-## 📦 Installation
 
 ```bash
 pip install scopelock
+scopelock scan app.js --prompt "Build a local offline calculator"
 ```
 
-Requires Python 3.10+. [Full installation guide →](getting-started/installation.md)
+## Pick up where you are {.home-section-title}
 
----
+<div class="grid cards" markdown>
 
-<div class="grid" markdown>
+-   :material-rocket-launch-outline: **New to ScopeLock?**
 
-<div markdown>
-## 📚 Documentation
-- [Installation & Quickstart](getting-started/installation.md)
-- [CLI Command Reference](cli/overview.md)
-- [GitHub Actions Integration](integrations/github-actions.md)
-- [Python SDK & REST API](api/python-sdk.md)
+    ---
+
+    Install the package, run a small example, and learn how to read the result.
+
+    [Start the quickstart →](getting-started/quickstart.md)
+
+-   :material-console: **Working from a terminal?**
+
+    ---
+
+    Browse command syntax, options, output formats and exit codes.
+
+    [Open the CLI reference →](cli/overview.md)
+
+-   :material-source-pull: **Adding a CI check?**
+
+    ---
+
+    Configure a pull request gate and, optionally, upload SARIF findings.
+
+    [Set up GitHub Actions →](integrations/github-actions.md)
+
+-   :material-code-braces: **Integrating from code?**
+
+    ---
+
+    Use the Python SDK or call the local REST API.
+
+    [Browse the API reference →](api/python-sdk.md)
+
 </div>
 
-<div markdown>
-## 📊 Evaluation & Benchmarks
-- [25-Program Benchmark Suite](benchmarks/benchmarks.md)
-- [Comparison with SAST Tools](benchmarks/comparison.md)
-- [Capability Taxonomy](concepts/taxonomy.md)
-- [Zero-Trust Divergence Engine](concepts/divergence.md)
-</div>
+## What ScopeLock checks {.home-section-title}
 
-</div>
+ScopeLock performs **static source analysis**. It looks for recognized APIs associated with filesystem, network, process, database, secret and runtime capabilities, then compares those observations with a policy derived from the declared intent.
+
+| Question | Where to learn more |
+|---|---|
+| Which calls are recognized? | [Capability taxonomy](concepts/taxonomy.md) |
+| How does text become a policy? | [Intent engine](concepts/intent-engine.md) |
+| What do the verdicts and scores mean? | [Divergence scoring](concepts/divergence.md) |
+| What are the scanner's limits? | [Security model and limitations](concepts/security-model.md) |
+
+!!! warning "Static analysis is not a sandbox"
+    ScopeLock reports recognized source-level capability use. It does not execute or contain code, and a clean result does not prove that a program is safe. Review important findings and use runtime controls appropriate to your application.
+
+## Choose an integration {.home-section-title}
+
+=== "GitHub Actions"
+
+    Run project scans on pushes and pull requests. A non-zero audit exit code can fail the job.
+
+    [Configure the workflow →](integrations/github-actions.md)
+
+=== "Pre-commit"
+
+    Catch findings before a local commit is created.
+
+    [Install the hook →](integrations/pre-commit.md)
+
+=== "Dashboard and REST API"
+
+    Run the local web interface or send requests to the local API server.
+
+    [Start the server →](cli/serve.md) · [Read the API docs →](api/rest-api.md)
+
+## Documentation map {.home-section-title}
+
+| Section | Covers |
+|---|---|
+| [Getting started](getting-started/installation.md) | Installation, quickstart and a complete first audit |
+| [CLI reference](cli/overview.md) | Command options, machine-readable output and exit codes |
+| [Concepts and security](concepts/intent-gap.md) | Intent, capabilities, verdicts, limitations and SARIF |
+| [Integrations](integrations/github-actions.md) | GitHub Actions, pre-commit, VS Code and annotations |
+| [API reference](api/python-sdk.md) | Python interfaces and local HTTP endpoints |
+| [Benchmarks](benchmarks/benchmarks.md) | Included evaluation set, results and methodology |
+
+## Offline by default {.home-section-title}
+
+The default intent engine uses local keyword rules and needs no API key. If the optional OpenAI integration is installed and `OPENAI_API_KEY` is set, ScopeLock can send the **requirement text** to the configured model for policy decomposition. Source files are scanned locally and are not included in that request. See [data handling and limitations](concepts/security-model.md#data-handling).
+
+## Benchmark scope {.home-section-title}
+
+The repository includes a small, deterministic evaluation set for checking known examples. Its scores describe those cases only; they are not a guarantee of detection on arbitrary software. Read the [benchmark methodology and results](benchmarks/benchmarks.md) before interpreting the numbers.
