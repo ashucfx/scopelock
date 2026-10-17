@@ -110,3 +110,22 @@ def test_database_intent_authorizes_database_capabilities():
 
     assert CapabilityCategory.DATABASE in policy.allowed_categories
     assert CapabilityCategory.NETWORK in policy.disallowed_categories
+
+
+def test_negated_network_capability_does_not_grant_permission():
+    for prompt in (
+        "Build a utility that does not use network access",
+        "Build a utility with no API requests",
+        "Build a utility without fetching data",
+        "Build a utility; network access is forbidden",
+    ):
+        policy = HeuristicIntentEngine.decompose(prompt)
+        assert CapabilityCategory.NETWORK not in policy.allowed_categories
+        assert CapabilityCategory.NETWORK in policy.disallowed_categories
+
+
+def test_explicit_positive_network_capability_still_grants_permission():
+    policy = HeuristicIntentEngine.decompose("Fetch current weather from the weather API")
+
+    assert CapabilityCategory.NETWORK in policy.allowed_categories
+    assert CapabilityCategory.NETWORK not in policy.disallowed_categories

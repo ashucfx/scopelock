@@ -71,6 +71,14 @@ class HeuristicIntentEngine:
         "cli command",
     )
 
+    NEGATION_RE = re.compile(
+        r"\b(?:no|without|never|avoid|avoids|avoiding|forbid|forbids|forbidden|"
+        r"prohibit|prohibits|prohibited|disallow|disallows|disallowed|not|"
+        r"do\s+not|does\s+not|did\s+not|don't|doesn't|didn't|"
+        r"must\s+not|mustn't|should\s+not|shouldn't|cannot|can't)\b",
+        re.IGNORECASE,
+    )
+
     DATABASE_KEYWORDS = (
         "database",
         "db",
@@ -97,6 +105,41 @@ class HeuristicIntentEngine:
         "offline",
         "pure function",
     )
+
+    @classmethod
+    def _mentions_authorized_capability(cls, prompt: str, keywords: tuple[str, ...]) -> bool:
+        """Return whether a capability keyword appears without nearby negation.
+
+        This conservative check does not attempt full natural-language parsing. A
+        negator within the same punctuation-delimited clause and up to four words
+        before a capability term prevents that term from granting permission.
+        """
+        text = prompt.lower()
+        for keyword in keywords:
+            escaped = re.escape(keyword).replace(r"\ ", r"\s+")
+            for match in re.finditer(rf"(?<!\w){escaped}(?!\w)", text):
+                clause_start = max(
+                    (text.rfind(mark, 0, match.start()) for mark in ".,;:!?\n"),
+                    default=-1,
+                ) + 1
+                clause_end = min(
+                    (position for mark in ".,;:!?\n" if (position := text.find(mark, match.end())) >= 0),
+                    default=len(text),
+                )
+                prefix = text[clause_start : match.start()]
+                suffix = text[match.end() : clause_end]
+                negated_before = any(
+                    len(re.findall(r"\b\w+\b", prefix[negator.end() :])) <= 4
+                    for negator in cls.NEGATION_RE.finditer(prefix)
+                )
+                negated_after = any(
+                    len(re.findall(r"\b\w+\b", suffix[: negator.start()])) <= 4
+                    for negator in cls.NEGATION_RE.finditer(suffix)
+                )
+                if negated_before or negated_after:
+                    continue
+                return True
+        return False
 
     @classmethod
     def decompose(cls, prompt: str) -> ScopePolicy:
@@ -130,7 +173,7 @@ class HeuristicIntentEngine:
         is_strictly_offline = any(k in prompt_lower for k in cls.OFFLINE_STRICT_KEYWORDS)
 
         # Network check
-        has_network = any(k in prompt_lower for k in cls.NETWORK_KEYWORDS)
+        has_network = cls._mentions_authorized_capability(prompt_lower, cls.NETWORK_KEYWORDS)
         if has_network and not is_strictly_offline:
             allowed_categories.add(CapabilityCategory.NETWORK)
             expected_caps.append(
@@ -145,7 +188,7 @@ class HeuristicIntentEngine:
             disallowed_categories.add(CapabilityCategory.NETWORK)
 
         # FileSystem check
-        has_fs = any(k in prompt_lower for k in cls.FILESYSTEM_KEYWORDS)
+        has_fs = cls._mentions_authorized_capability(prompt_lower, cls.FILESYSTEM_KEYWORDS)
         if has_fs and not is_strictly_offline:
             allowed_categories.add(CapabilityCategory.FILESYSTEM)
             expected_caps.append(
@@ -160,7 +203,7 @@ class HeuristicIntentEngine:
             disallowed_categories.add(CapabilityCategory.FILESYSTEM)
 
         # Database check
-        has_database = any(k in prompt_lower for k in cls.DATABASE_KEYWORDS)
+        has_database = cls._mentions_authorized_capability(prompt_lower, cls.DATABASE_KEYWORDS)
         if has_database:
             allowed_categories.add(CapabilityCategory.DATABASE)
             expected_caps.append(
@@ -175,7 +218,7 @@ class HeuristicIntentEngine:
             disallowed_categories.add(CapabilityCategory.DATABASE)
 
         # Process check
-        has_proc = any(k in prompt_lower for k in cls.PROCESS_KEYWORDS)
+        has_proc = cls._mentions_authorized_capability(prompt_lower, cls.PROCESS_KEYWORDS)
         if has_proc:
             allowed_categories.add(CapabilityCategory.PROCESS)
             expected_caps.append(
