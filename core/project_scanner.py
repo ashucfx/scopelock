@@ -23,6 +23,7 @@ class ProjectAuditSummary:
     scanned_files: int = 0
     clean_files: int = 0
     violated_files: int = 0
+    needs_review_files: int = 0
     total_violations: int = 0
     total_latency_ms: float = 0.0
     file_reports: list[AuditReport] = field(default_factory=list)
@@ -132,6 +133,8 @@ class ProjectScanner:
                 if report.final_verdict == AuditVerdict.FAILED:
                     summary.violated_files += 1
                     summary.total_violations += report.total_violations
+                elif report.final_verdict == AuditVerdict.NEEDS_REVIEW:
+                    summary.needs_review_files += 1
                 else:
                     summary.clean_files += 1
 

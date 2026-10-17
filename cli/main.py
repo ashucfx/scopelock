@@ -42,11 +42,15 @@ def cli():
 def scan(file_path: str, prompt: str, as_json: bool, as_sarif: bool):
     """Scan a source file against the stated developer prompt intent."""
     scanner = ScannerEngine()
-    caps, latency_ms = scanner.scan_file(file_path)
+    caps, latency_ms, diagnostics = scanner.scan_file_detailed(file_path)
 
     policy = IntentDecomposer.decompose(prompt)
     report = CapabilityAligner.align(
-        policy=policy, observed_caps=caps, target_file=file_path, latency_ms=latency_ms
+        policy=policy,
+        observed_caps=caps,
+        target_file=file_path,
+        latency_ms=latency_ms,
+        diagnostics=diagnostics,
     )
 
     if as_json:
@@ -56,9 +60,7 @@ def scan(file_path: str, prompt: str, as_json: bool, as_sarif: bool):
     else:
         click.echo(ReportFormatter.to_terminal(report))
 
-    if report.final_verdict == AuditVerdict.FAILED:
-        sys.exit(1)
-    sys.exit(0)
+    sys.exit(0 if report.final_verdict == AuditVerdict.PASSED else 1)
 
 
 @cli.command(name="scan-project")
@@ -98,13 +100,22 @@ def scan_project(
     click.echo(f"Total Files Scanned : {summary.scanned_files}")
     click.echo(f"Compliant Files     : {Fore.GREEN}{summary.clean_files}{Style.RESET_ALL}")
     click.echo(f"Over-privileged     : {Fore.RED if summary.violated_files > 0 else Fore.GREEN}{summary.violated_files}{Style.RESET_ALL}")
+    click.echo(f"Needs Review        : {Fore.YELLOW}{summary.needs_review_files}{Style.RESET_ALL}")
     click.echo(f"Total Violations    : {summary.total_violations}")
     click.echo(f"Total AST Latency   : {summary.total_latency_ms:.2f} ms")
     click.echo("-" * 70)
 
     for report in summary.file_reports:
-        status_tag = Fore.GREEN + "[PASS]" if report.final_verdict == AuditVerdict.PASSED else Fore.RED + "[FAIL]"
+        if report.final_verdict == AuditVerdict.PASSED:
+            status_tag = Fore.GREEN + "[PASS]"
+        elif report.final_verdict == AuditVerdict.NEEDS_REVIEW:
+            status_tag = Fore.YELLOW + "[REVIEW]"
+        else:
+            status_tag = Fore.RED + "[FAIL]"
         click.echo(f"{status_tag}{Style.RESET_ALL} {report.target_file:<40} ({report.policy.stated_intent[:25]}..)")
+
+        for diagnostic in report.diagnostics:
+            click.echo(f"    {Fore.YELLOW}* {diagnostic.severity}: {diagnostic.message}{Style.RESET_ALL}")
 
         for f in report.findings:
             if f.verdict != AuditVerdict.PASSED:
@@ -122,6 +133,9 @@ def scan_project(
 
     if summary.verdict == AuditVerdict.FAILED:
         click.echo(Fore.RED + Style.BRIGHT + "\n[AUDIT FAILED] Capability over-reach detected. Deployment blocked.\n")
+        sys.exit(1)
+    if summary.verdict == AuditVerdict.NEEDS_REVIEW:
+        click.echo(Fore.YELLOW + Style.BRIGHT + "\n[AUDIT NEEDS REVIEW] Scan errors or parser diagnostics prevent a clean result.\n")
         sys.exit(1)
 
     click.echo(Fore.GREEN + Style.BRIGHT + "\n[AUDIT PASSED] All repository modules comply with least-privilege intent.\n")
@@ -164,17 +178,19 @@ def audit_code(code: str, prompt: str, lang: str):
     """Directly audit a raw code snippet against an intent prompt."""
     file_name = f"snippet.{lang}"
     scanner = ScannerEngine()
-    caps, latency_ms = scanner.scan_code(code, file_name=file_name)
+    caps, latency_ms, diagnostics = scanner.scan_code_detailed(code, file_name=file_name)
 
     policy = IntentDecomposer.decompose(prompt)
     report = CapabilityAligner.align(
-        policy=policy, observed_caps=caps, target_file=file_name, latency_ms=latency_ms
+        policy=policy,
+        observed_caps=caps,
+        target_file=file_name,
+        latency_ms=latency_ms,
+        diagnostics=diagnostics,
     )
     click.echo(ReportFormatter.to_terminal(report))
 
-    if report.final_verdict == AuditVerdict.FAILED:
-        sys.exit(1)
-    sys.exit(0)
+    sys.exit(0 if report.final_verdict == AuditVerdict.PASSED else 1)
 
 
 @cli.command()

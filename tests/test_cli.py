@@ -1,5 +1,7 @@
 """Test suite for ScopeLock CLI and Benchmark Suite."""
 
+import json
+
 from click.testing import CliRunner
 
 from scopelock.benchmarks.runner import BenchmarkRunner
@@ -46,6 +48,57 @@ def test_cli_audit_code_passes_clean():
     )
     assert result.exit_code == 0
     assert "PASSED" in result.output
+
+
+def test_cli_audit_code_fails_closed_on_syntax_error():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["audit-code", "--code", "const = ;", "--prompt", "Build a local calculator"],
+    )
+
+    assert result.exit_code == 1
+    assert "NEEDS REVIEW" in result.output
+    assert "Parser reported an error node" in result.output
+
+
+def test_cli_scan_project_fails_closed_on_syntax_error(tmp_path):
+    (tmp_path / "broken.js").write_text("const = ;", encoding="utf-8")
+    runner = CliRunner()
+
+    result = runner.invoke(cli, ["scan-project", str(tmp_path)])
+
+    assert result.exit_code == 1
+    assert "AUDIT NEEDS REVIEW" in result.output
+
+
+def test_cli_scan_file_fails_closed_on_syntax_error(tmp_path):
+    source = tmp_path / "broken.js"
+    source.write_text("const = ;", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        cli, ["scan", str(source), "--prompt", "Build a local calculator"]
+    )
+
+    assert result.exit_code == 1
+    assert "NEEDS REVIEW" in result.output
+    assert "Parser reported an error node" in result.output
+
+
+def test_cli_scan_sarif_includes_parser_diagnostics(tmp_path):
+    source = tmp_path / "broken.js"
+    source.write_text("const = ;", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        cli,
+        ["scan", str(source), "--prompt", "Build a local calculator", "--sarif"],
+    )
+    document = json.loads(result.output)
+
+    assert result.exit_code == 1
+    invocation = document["runs"][0]["invocations"][0]
+    assert invocation["executionSuccessful"] is True
+    assert invocation["toolExecutionNotifications"]
 
 
 def test_benchmark_suite_metrics():

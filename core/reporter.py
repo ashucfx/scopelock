@@ -92,6 +92,17 @@ class ReportFormatter:
         else:
             verdict_str = Fore.YELLOW + Style.BRIGHT + "[NEEDS REVIEW - AMBIGUOUS INTENT]"
 
+        if report.diagnostics:
+            lines.append("\nDiagnostics:")
+            for diagnostic in report.diagnostics:
+                location = diagnostic.source_location
+                suffix = (
+                    f" at {location.file}:{location.line}:{location.col + 1}"
+                    if location
+                    else ""
+                )
+                lines.append(f"  [{diagnostic.severity.upper()}]{suffix} {diagnostic.message}")
+
         lines.append(f" Final Audit Verdict: {verdict_str}{Style.RESET_ALL}")
         lines.append("=" * width)
         return "\n".join(lines)
@@ -137,6 +148,41 @@ class ReportFormatter:
                         }
                     },
                     "results": sarif_results,
+                    "invocations": [
+                        {
+                            "executionSuccessful": True,
+                            "toolExecutionNotifications": [
+                                {
+                                    "level": (
+                                        "error"
+                                        if diagnostic.severity.upper() == "ERROR"
+                                        else "warning"
+                                    ),
+                                    "message": {"text": diagnostic.message},
+                                    **(
+                                        {
+                                            "locations": [
+                                                {
+                                                    "physicalLocation": {
+                                                        "artifactLocation": {
+                                                            "uri": diagnostic.source_location.file
+                                                        },
+                                                        "region": {
+                                                            "startLine": diagnostic.source_location.line,
+                                                            "startColumn": diagnostic.source_location.col + 1,
+                                                        },
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                        if diagnostic.source_location
+                                        else {}
+                                    ),
+                                }
+                                for diagnostic in report.diagnostics
+                            ],
+                        }
+                    ],
                 }
             ],
         }
@@ -150,6 +196,7 @@ class ReportFormatter:
                 "scanned_files": summary.scanned_files,
                 "clean_files": summary.clean_files,
                 "violated_files": summary.violated_files,
+                "needs_review_files": summary.needs_review_files,
                 "total_violations": summary.total_violations,
                 "total_latency_ms": summary.total_latency_ms,
                 "verdict": summary.verdict.value,
@@ -216,6 +263,7 @@ class ReportFormatter:
                         "scannedFiles": summary.scanned_files,
                         "cleanFiles": summary.clean_files,
                         "violatedFiles": summary.violated_files,
+                        "needsReviewFiles": summary.needs_review_files,
                         "totalViolations": summary.total_violations,
                         "verdict": summary.verdict.value,
                     },
