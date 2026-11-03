@@ -2,6 +2,21 @@
 
 Use ScopeLock programmatically in your Python applications and scripts.
 
+For new integrations, use the stable high-level client:
+
+```python
+from scopelock import ScopeLockClient
+
+client = ScopeLockClient(force_offline=True)
+report = client.audit(
+    "fetch('https://evil.example')",
+    "Build a local offline calculator",
+)
+assert report.final_verdict.value == "FAILED"
+```
+
+`ScopeLockClient` also provides `audit_file()` and `audit_project()` methods.
+
 ## Installation
 
 ```bash
