@@ -36,7 +36,12 @@ jobs:
 
       - name: Run Unit Tests with Pytest
         run: |
-          pytest -v tests/
+          pytest -v --cov=core --cov=scanner --cov=cli --cov=ui --cov=benchmarks --cov-report=term-missing tests/
+
+      - name: Validate built distribution
+        run: |
+          python -m pip install --force-reinstall dist/*.whl
+          scopelock --version
 
       - name: Run 25-Program Empirical Benchmark
         run: |
