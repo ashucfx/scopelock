@@ -85,6 +85,20 @@ cd scopelock
 pip install -e .
 ```
 
+### Publishing a release
+
+Releases are published to PyPI by the `Publish Python Package` workflow. Configure
+the repository's `pypi` environment with PyPI trusted publishing for this
+repository, then create and push a version tag:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The workflow builds and validates both the wheel and source distribution before
+publishing them. No long-lived PyPI token is stored in the repository.
+
 ### Run Developer CLI
 ```bash
 # 1. Audit a code file against an intent prompt
@@ -161,4 +175,3 @@ See [ROADMAP.md](ROADMAP.md) for detailed architectural specifications, delivery
 
 ScopeLock is open-source software licensed under the [Apache 2.0 License](LICENSE).
 Built for software engineering teams and AI developers requiring zero-trust execution assurance.
-
