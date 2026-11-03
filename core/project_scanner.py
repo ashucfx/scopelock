@@ -52,7 +52,17 @@ class ProjectScanner:
     )
 
     IGNORE_DIRS: ClassVar[tuple[str, ...]] = (
-        "node_modules", ".git", ".venv", "venv", "__pycache__", "dist", "build", ".next"
+        "node_modules",
+        ".git",
+        ".venv",
+        "venv",
+        "__pycache__",
+        ".pytest_cache",
+        "dist",
+        "build",
+        "site",
+        "htmlcov",
+        ".next",
     )
 
     def __init__(self, policy_file: str | None = None):

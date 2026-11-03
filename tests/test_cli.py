@@ -41,6 +41,28 @@ def test_cli_version():
     assert "v1.0.0" in result.output
 
 
+def test_cli_doctor_reports_installation():
+    result = CliRunner().invoke(cli, ["doctor"])
+
+    assert result.exit_code == 0
+    assert "ScopeLock 1.0.0" in result.output
+    assert "Python:" in result.output
+    assert "Try:" in result.output
+
+
+def test_cli_scan_project_accepts_default_prompt(tmp_path):
+    source = tmp_path / "app.py"
+    source.write_text("def add(a, b):\n    return a + b\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        cli,
+        ["scan-project", str(tmp_path), "--prompt", "Build a local calculator"],
+    )
+
+    assert result.exit_code == 0
+    assert "AUDIT PASSED" in result.output
+
+
 def test_cli_audit_code_blocks_violation():
     """CLI audit-code must exit with code 1 when capability divergence is detected."""
     runner = CliRunner()
