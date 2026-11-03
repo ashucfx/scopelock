@@ -23,6 +23,9 @@ scopelock scan-project [DIRECTORY] [OPTIONS]
 | `--json` | Emit the complete aggregate project report as JSON |
 | `--sarif` | Emit all project findings as SARIF 2.1.0 |
 
+When `--pdf` is supplied, ScopeLock writes one aggregate repository report
+containing the summary, every scanned file, diagnostics, and scan errors.
+
 When either machine-readable option is selected, stdout contains only the JSON or SARIF document. The command exits with status `0` only when the audit passes; failed, review-needed or incomplete scans exit with status `1` so CI jobs can fail closed.
 
 ## Supported File Types

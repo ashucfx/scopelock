@@ -175,6 +175,21 @@ Run the 25-program empirical benchmark suite and return results.
 }
 ```
 
+### `POST /api/project/audit`
+
+Audit a repository directory and return the aggregate JSON report.
+
+```json
+{
+  "directory": ".",
+  "policy_file": "scopelock.json"
+}
+```
+
+### `POST /api/project/audit/pdf`
+
+Generate the aggregate repository audit as a PDF download.
+
 ---
 
 ## Error Responses
