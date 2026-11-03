@@ -34,7 +34,7 @@ class ScopeLockClient:
         """Audit a source file while preserving its path in findings."""
         source_path = Path(path)
         code = source_path.read_text(encoding="utf-8", errors="replace")
-        extension = self._normalize_language(source_path.suffix.lstrip("."))
+        self._normalize_language(source_path.suffix.lstrip("."))
         caps, latency, diagnostics = self.scanner.scan_code_detailed(
             code, file_name=str(source_path)
         )
