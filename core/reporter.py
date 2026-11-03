@@ -253,7 +253,7 @@ class ReportFormatter:
                     "tool": {
                         "driver": {
                             "name": "ScopeLock",
-                            "semanticVersion": summary.file_reports[0].engine_version if summary.file_reports else "1.0.0",
+                            "semanticVersion": summary.file_reports[0].engine_version if summary.file_reports else "1.0.1",
                             "informationUri": "https://github.com/ashucfx/scopelock",
                             "rules": rules,
                         }

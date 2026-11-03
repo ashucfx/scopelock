@@ -95,8 +95,8 @@ the repository's `pypi` environment with PyPI trusted publishing for this
 repository, then create and push a version tag:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.0.1
+git push origin v1.0.1
 ```
 
 The workflow builds and validates both the wheel and source distribution before
