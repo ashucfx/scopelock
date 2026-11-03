@@ -7,6 +7,7 @@ running empirical benchmarks, and serving the interactive security dashboard.
 """
 
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -30,6 +31,27 @@ init(autoreset=True)
 @click.version_option(version=__version__, message="%(prog)s v%(version)s")
 def cli():
     """ScopeLock: Zero-Trust Security for AI-Generated Code."""
+
+
+@cli.command()
+def doctor():
+    """Check installation and print the fastest way to run ScopeLock."""
+    executable = shutil.which("scopelock")
+    python_dir = Path(sys.executable).parent
+    scripts_dir = python_dir if python_dir.name.lower() == "scripts" else python_dir / "Scripts"
+    click.echo(f"ScopeLock {__version__}")
+    click.echo(f"Python: {sys.version.split()[0]} ({sys.executable})")
+    click.echo(f"Executable: {executable or 'not found on PATH'}")
+    click.echo('Try: scopelock scan-project . --prompt "Describe what this project does"')
+
+    if executable:
+        click.echo("Status: ready")
+        return
+
+    click.echo("Status: installed, but the command directory is not on PATH")
+    click.echo(f"Run now: & \"{scripts_dir / 'scopelock.exe'}\" scan-project . --prompt \"Describe what this project does\"")
+    click.echo("Permanent fix: add this directory to PATH, then restart PowerShell:")
+    click.echo(f"  {scripts_dir}")
 
 
 @cli.command()
@@ -68,12 +90,17 @@ def scan(file_path: str, prompt: str, as_json: bool, as_sarif: bool):
 @cli.command(name="scan-project")
 @click.argument("directory", default=".", type=click.Path(exists=True, file_okay=False))
 @click.option("--policy", "policy_file", help="Path to scopelock.json configuration policy.")
+@click.option(
+    "--prompt",
+    help="Intent applied to files without an @intent annotation or policy entry.",
+)
 @click.option("--pdf", "pdf_output", help="Optional output path to save a PDF summary report.")
 @click.option("--json", "as_json", is_flag=True, help="Output structured project JSON.")
 @click.option("--sarif", "as_sarif", is_flag=True, help="Output aggregate SARIF for CI/CD.")
 def scan_project(
     directory: str,
     policy_file: str | None,
+    prompt: str | None,
     pdf_output: str | None,
     as_json: bool,
     as_sarif: bool,
@@ -91,7 +118,7 @@ def scan_project(
     except (OSError, PolicyConfigError) as exc:
         click.echo(f"Invalid policy configuration: {exc}", err=True)
         sys.exit(2)
-    summary = scanner.scan_directory(directory)
+    summary = scanner.scan_directory(directory, default_intent=prompt)
 
     if as_json:
         click.echo(ReportFormatter.to_project_json(summary))

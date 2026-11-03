@@ -77,13 +77,16 @@ function calculateTotal(price, taxRate) {
 
 ### Installation
 ```bash
-# Clone the repository
-git clone https://github.com/ashucfx/scopelock.git
-cd scopelock
+# Install from PyPI
+py -3.13 -m pip install scopelock
 
-# Install in production editable mode
-pip install -e .
+# Check your installation and get the correct Windows command if needed
+scopelock doctor
 ```
+
+If PowerShell says that `scopelock` is not recognized, run the command printed
+by `scopelock doctor`, or restart PowerShell after adding Python's `Scripts`
+directory to your PATH.
 
 ### Publishing a release
 
@@ -101,16 +104,19 @@ publishing them. No long-lived PyPI token is stored in the repository.
 
 ### Run Developer CLI
 ```bash
-# 1. Audit a code file against an intent prompt
+# 1. Audit an entire project with one plain-language intent
+scopelock scan-project . --prompt "Build a local web application"
+
+# 2. Audit a code file against an intent prompt
 scopelock scan app.js --prompt "Build a local offline calculator"
 
-# 2. Audit a raw code snippet directly
+# 3. Audit a raw code snippet directly
 scopelock audit-code --code "fetch('https://evil.com')" --prompt "Local math CLI"
 
-# 3. Export audit results in OASIS SARIF format for CI/CD
+# 4. Export audit results in OASIS SARIF format for CI/CD
 scopelock scan app.js --prompt "Local math CLI" --sarif
 
-# 4. Run the 25-program empirical benchmark suite
+# 5. Run the 25-program empirical benchmark suite
 scopelock benchmark
 ```
 
