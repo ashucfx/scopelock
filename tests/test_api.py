@@ -39,3 +39,19 @@ def test_audit_sarif_endpoint_returns_sarif():
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/sarif+json")
     assert response.json()["version"] == "2.1.0"
+
+
+def test_project_audit_endpoint_returns_aggregate_report(tmp_path):
+    source = tmp_path / "module.js"
+    source.write_text(
+        "// @intent: Build a local arithmetic calculator\n"
+        "function add(a, b) { return a + b; }\n",
+        encoding="utf-8",
+    )
+
+    response = client.post("/api/project/audit", json={"directory": str(tmp_path)})
+
+    assert response.status_code == 200
+    document = response.json()
+    assert document["scanned_files"] == 1
+    assert document["verdict"] == "PASSED"

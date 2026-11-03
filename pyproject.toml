@@ -52,7 +52,7 @@ dev = [
     "pytest-cov>=4.1.0",
     "ruff>=0.1.0",
     "mypy>=1.6.0",
-    "httpx2>=2.13.1",
+    "httpx>=0.24.0",
     "build>=1.2.0",
 ]
 docs = [
