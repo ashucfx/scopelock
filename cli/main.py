@@ -20,7 +20,7 @@ from scopelock.core.intent_engine import IntentDecomposer
 from scopelock.core.pdf_generator import PDFReportGenerator
 from scopelock.core.project_scanner import PolicyConfigError, ProjectScanner
 from scopelock.core.reporter import ReportFormatter
-from scopelock.core.schema import AuditVerdict
+from scopelock.core.schema import AuditVerdict, RiskTier
 from scopelock.scanner.engine import ScannerEngine
 
 init(autoreset=True)
@@ -124,15 +124,15 @@ def scan_project(
             click.echo(f"    {Fore.YELLOW}* {diagnostic.severity}: {diagnostic.message}{Style.RESET_ALL}")
 
         for f in report.findings:
-            if f.verdict != AuditVerdict.PASSED:
+            if f.verdict != RiskTier.JUSTIFIED:
                 loc = f.observed.source_location
                 click.echo(f"    {Fore.RED}* L{loc.line}: {f.observed.category.value} -> {f.observed.raw_call} ({f.finding}){Style.RESET_ALL}")
 
     click.echo("=" * 70)
 
     # Export PDF if requested
-    if pdf_output and summary.file_reports:
-        pdf_bytes = PDFReportGenerator.generate(summary.file_reports[0])
+    if pdf_output:
+        pdf_bytes = PDFReportGenerator.generate_project(summary)
         with open(pdf_output, "wb") as f:
             f.write(pdf_bytes)
         click.echo(Fore.GREEN + f"[PDF] Audit Report successfully saved to: {pdf_output}")

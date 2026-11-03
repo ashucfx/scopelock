@@ -16,6 +16,7 @@ from scopelock.benchmarks.runner import BenchmarkRunner
 from scopelock.core.aligner import CapabilityAligner
 from scopelock.core.intent_engine import IntentDecomposer
 from scopelock.core.pdf_generator import PDFReportGenerator
+from scopelock.core.project_scanner import ProjectScanner
 from scopelock.core.reporter import ReportFormatter
 from scopelock.scanner.engine import ScannerEngine
 
@@ -36,6 +37,11 @@ class AuditRequest(BaseModel):
 
 class IntentRequest(BaseModel):
     prompt: str = Field(min_length=1, max_length=20_000)
+
+
+class ProjectAuditRequest(BaseModel):
+    directory: str = Field(min_length=1, max_length=4_096)
+    policy_file: str | None = Field(default=None, max_length=4_096)
 
 
 def _audit_request(req: AuditRequest):
@@ -190,6 +196,30 @@ def generate_sarif_report(req: AuditRequest):
     """Return a SARIF 2.1.0 audit result for CI integrations."""
     report = _audit_request(req)
     return Response(content=ReportFormatter.to_sarif(report), media_type="application/sarif+json")
+
+
+@app.post("/api/project/audit")
+def audit_project(req: ProjectAuditRequest):
+    """Audit a repository directory and return the aggregate project report."""
+    try:
+        summary = ProjectScanner(policy_file=req.policy_file).scan_directory(req.directory)
+    except (OSError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return Response(content=ReportFormatter.to_project_json(summary), media_type="application/json")
+
+
+@app.post("/api/project/audit/pdf")
+def generate_project_pdf(req: ProjectAuditRequest):
+    """Generate an aggregate PDF report for a repository directory."""
+    try:
+        summary = ProjectScanner(policy_file=req.policy_file).scan_directory(req.directory)
+    except (OSError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return Response(
+        content=PDFReportGenerator.generate_project(summary),
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="ScopeLock_Project_Audit.pdf"'},
+    )
 
 
 @app.get("/api/benchmark")

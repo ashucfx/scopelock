@@ -240,3 +240,81 @@ class PDFReportGenerator:
         pdf_bytes = buffer.getvalue()
         buffer.close()
         return pdf_bytes
+
+    @classmethod
+    def generate_project(cls, summary) -> bytes:
+        """Generate an aggregate PDF report for a repository audit."""
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36
+        )
+        styles = getSampleStyleSheet()
+        title = ParagraphStyle(
+            "ProjectTitle", parent=styles["Heading1"], fontSize=20, textColor=colors.HexColor("#0f172a")
+        )
+        body = ParagraphStyle(
+            "ProjectBody", parent=styles["Normal"], fontSize=9, leading=12,
+            textColor=colors.HexColor("#334155")
+        )
+        heading = ParagraphStyle(
+            "ProjectHeading", parent=styles["Heading2"], fontSize=13, leading=16,
+            textColor=colors.HexColor("#1e293b"), spaceBefore=14, spaceAfter=6
+        )
+        story = [
+            Paragraph("SCOPELOCK PROJECT SECURITY AUDIT", title),
+            Paragraph(
+                f"Repository-wide capability divergence report &bull; Verdict: "
+                f"<b>{summary.verdict.value}</b>",
+                body,
+            ),
+            HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#0284c7"), spaceAfter=12),
+            Paragraph("Executive Summary", heading),
+        ]
+        summary_rows = [
+            ["Metric", "Value"],
+            ["Files scanned", str(summary.scanned_files)],
+            ["Compliant files", str(summary.clean_files)],
+            ["Files with violations", str(summary.violated_files)],
+            ["Files needing review", str(summary.needs_review_files)],
+            ["Total violations", str(summary.total_violations)],
+            ["Total analysis latency", f"{summary.total_latency_ms:.2f} ms"],
+            ["Skipped files", str(len(summary.skipped_files))],
+        ]
+        summary_table = Table(summary_rows, colWidths=[220, 320])
+        summary_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+            ("PADDING", (0, 0), (-1, -1), 6),
+        ]))
+        story.append(summary_table)
+        story.append(Paragraph("File Results", heading))
+        rows = [["Verdict", "File", "Violations", "Diagnostics"]]
+        rows.extend(
+            [
+                [
+                    report.final_verdict.value,
+                    report.target_file,
+                    str(report.total_violations),
+                    str(len(report.diagnostics)),
+                ]
+                for report in summary.file_reports
+            ]
+        )
+        if len(rows) == 1:
+            rows.append(["NONE", "No supported source files were scanned", "0", "0"])
+        results_table = Table(rows, colWidths=[95, 290, 75, 80], repeatRows=1)
+        results_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+            ("PADDING", (0, 0), (-1, -1), 5),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ]))
+        story.append(results_table)
+        if summary.scan_errors:
+            story.append(Paragraph("Scan Errors", heading))
+            for error in summary.scan_errors:
+                story.append(Paragraph(f"&bull; {error}", body))
+        doc.build(story)
+        return buffer.getvalue()
