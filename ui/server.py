@@ -598,7 +598,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div class="logo-container">
       <div class="shield-badge">SL</div>
       <div>
-        <div class="brand-title">ScopeLock <span style="font-size:12px;color:var(--accent);font-weight:600;">v1.0.0</span></div>
+        <div class="brand-title">ScopeLock <span style="font-size:12px;color:var(--accent);font-weight:600;">v1.0.1</span></div>
         <div class="tagline">Never let AI code do more than you asked for.</div>
       </div>
     </div>

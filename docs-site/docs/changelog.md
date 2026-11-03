@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 
 ---
 
+## [1.0.1] — 2026-11-03
+
+### Added
+- Guided `scopelock doctor` installation diagnostics.
+- Project-level `scan-project --prompt` onboarding.
+- Default exclusions for generated, cached, and vendor directories.
+- Trusted PyPI publishing workflow.
+
+---
+
 ## [1.0.0] — 2026-10-01
 
 ### 🚀 Initial Release

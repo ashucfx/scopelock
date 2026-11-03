@@ -106,7 +106,7 @@ class AuditReport(BaseModel):
     final_verdict: AuditVerdict = AuditVerdict.PASSED
     analysis_latency_ms: float = 0.0
     diagnostics: list[ScanDiagnostic] = Field(default_factory=list)
-    engine_version: str = "1.0.0"
+    engine_version: str = "1.0.1"
     timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     def has_violations(self) -> bool:

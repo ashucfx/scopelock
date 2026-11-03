@@ -38,14 +38,14 @@ def test_cli_version():
     runner = CliRunner()
     result = runner.invoke(cli, ["--version"])
     assert result.exit_code == 0
-    assert "v1.0.0" in result.output
+    assert "v1.0.1" in result.output
 
 
 def test_cli_doctor_reports_installation():
     result = CliRunner().invoke(cli, ["doctor"])
 
     assert result.exit_code == 0
-    assert "ScopeLock 1.0.0" in result.output
+    assert "ScopeLock 1.0.1" in result.output
     assert "Python:" in result.output
     assert "Try:" in result.output
 
